@@ -71,7 +71,8 @@
       tallas: tallas ? tallas.map(Number).filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; }) : null,
       tallasAgotadas: Array.isArray(c.tallasAgotadas) ? c.tallasAgotadas.map(Number) : [],
       agotado: !!(p.agotado || c.agotado),
-      ultimoPar: !!c.ultimoPar
+      ultimoPar: !!c.ultimoPar,
+      liquidacion: !!c.liquidacion
     };
   }
 
@@ -88,7 +89,7 @@
 
   // Ordena las claves del color como en el resto del archivo.
   function colorOrdenado(c) {
-    var orden = ['id', 'nombre', 'fotos', 'precio', 'tallas', 'tallasAgotadas', 'ultimoPar', 'agotado'];
+    var orden = ['id', 'nombre', 'fotos', 'precio', 'tallas', 'tallasAgotadas', 'ultimoPar', 'liquidacion', 'agotado'];
     var out = {};
     orden.forEach(function (k) { if (c[k] !== undefined) out[k] = c[k]; });
     Object.keys(c).forEach(function (k) { if (out[k] === undefined && c[k] !== undefined) out[k] = c[k]; });
@@ -128,6 +129,7 @@
     var agot = (d.tallasAgotadas || []).map(Number).filter(function (t) { return tallas.indexOf(t) !== -1; }).sort(function (a, b) { return a - b; });
     if (agot.length) c.tallasAgotadas = agot; else delete c.tallasAgotadas;
     if (d.ultimoPar) c.ultimoPar = true; else delete c.ultimoPar;
+    if (d.liquidacion) c.liquidacion = true; else delete c.liquidacion;
     if (d.agotado) c.agotado = true; else delete c.agotado;
     return colorOrdenado(c);
   }

@@ -614,6 +614,8 @@ html[data-tema="a"] .tarjeta { border-color: transparent; }
 }
 .etiqueta--aviso { background: var(--duo); color: var(--duo-tinta); }
 .etiqueta--agotado { background: var(--superficie); color: var(--tinta); }
+.etiqueta--liquidacion { top: 8px; bottom: auto; background: #C8102E; color: #FFFFFF; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18); }
+.tarjeta__precio--liquidacion { color: #C8102E; }
 .ficha__etiquetas .etiqueta { position: static; font-size: 0.75rem; padding: 6px 11px; }
 
 /* ============================== BLOQUES ============================== */

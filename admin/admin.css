@@ -126,6 +126,7 @@ button, input, textarea { font: inherit; color: inherit; }
 .etq { font-size: .85rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: var(--tonal); }
 .etq--agotado { background: #E6E1E3; color: #4b4045; }
 .etq--ultimo { background: var(--aviso); color: var(--aviso-tinta); }
+.etq--liquidacion { background: #C8102E; color: #FFFFFF; }
 .item__acciones { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
 .stock { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--borde); border-radius: 999px; padding: 3px; gap: 3px; }
 .stock button {

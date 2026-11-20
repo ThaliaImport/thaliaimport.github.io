@@ -293,6 +293,7 @@
       '<div class="tarjeta__foto">' +
         '<img src="' + foto('tarjeta', principal) + '" alt="' + esc(p.nombre + ', color ' + c.nombre) + '" width="600" height="600" loading="lazy" decoding="async">' +
         (etiqueta ? '<span class="etiqueta ' + etiqueta.clase + '">' + esc(etiqueta.texto) + '</span>' : '') +
+        (c.liquidacion && !agotada ? '<span class="etiqueta etiqueta--liquidacion">Liquidación</span>' : '') +
         (agotada ? '' : '<button type="button" class="tarjeta__duo" data-duo="' + esc(k) + '" data-nombre="' + esc(nombreCompleto) + '" aria-pressed="false">' +
           '<svg class="icono icono--mas" aria-hidden="true"><use href="#i-mas"/></svg><svg class="icono icono--check" aria-hidden="true"><use href="#i-check"/></svg>' +
           '<span aria-hidden="true">Dúo</span><span class="oculto">Agregar ' + esc(nombreCompleto) + ' a mi dúo</span></button>') +
@@ -301,7 +302,7 @@
         '<div class="tarjeta__datos">' +
           '<h3 class="tarjeta__nombre"><button type="button" class="tarjeta__ver" data-producto="' + esc(p.id) + '" data-color="' + esc(c.id) + '">' + esc(p.nombre) + '<span class="oculto">, ' + esc(c.nombre) + '. Ver fotos y detalles</span></button></h3>' +
           '<p class="tarjeta__color">' + esc(c.nombre) + '</p>' +
-          '<p class="tarjeta__precio' + (precio ? '' : ' tarjeta__precio--consultar') + '">' + (precio ? esc(formatoPrecio(precio)) : 'Consultar precio') + '</p>' +
+          '<p class="tarjeta__precio' + (precio ? '' : ' tarjeta__precio--consultar') + (c.liquidacion && !agotada ? ' tarjeta__precio--liquidacion' : '') + '">' + (precio ? esc(formatoPrecio(precio)) : 'Consultar precio') + '</p>' +
           lineaTallas +
         '</div>' +
         pedir +
@@ -463,7 +464,8 @@
     var precioEl = $('#ficha-precio');
     precioEl.textContent = precio ? formatoPrecio(precio) : 'Consultar precio';
     precioEl.classList.toggle('ficha__precio--consultar', !precio);
-    $('#ficha-etiquetas').innerHTML = etiqueta ? '<span class="etiqueta ' + etiqueta.clase + '">' + esc(etiqueta.texto) + '</span>' : '';
+    $('#ficha-etiquetas').innerHTML = (c.liquidacion && !estaAgotado(p, c) ? '<span class="etiqueta etiqueta--liquidacion">Liquidación</span>' : '') +
+      (etiqueta ? '<span class="etiqueta ' + etiqueta.clase + '">' + esc(etiqueta.texto) + '</span>' : '');
     pintarColoresFicha();
     pintarTallasFicha();
     pintarGaleria();

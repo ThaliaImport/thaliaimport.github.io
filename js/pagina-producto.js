@@ -41,6 +41,7 @@
     var tallas = tallasDe(p, c);
     var agotado = p.agotado || c.agotado;
     var detalle = [
+      (!agotado && c.liquidacion) ? 'Liquidación' : '',
       agotado ? 'Agotado' : (precio ? precioTexto(precio) : 'Precio por WhatsApp'),
       agotado ? '' : (c.ultimoPar ? 'Último par, talla ' + (tallas ? tallas[0] : '') : (tallas ? (tallas.length === 1 ? 'Solo talla ' + tallas[0] : 'Tallas ' + listaTexto(tallas)) : 'Consulta tallas'))
     ].filter(Boolean).join(' · ');

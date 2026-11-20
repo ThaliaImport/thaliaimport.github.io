@@ -162,6 +162,7 @@
     const etq = [];
     if (ef.agotado) etq.push('<span class="etq etq--agotado">Agotado</span>');
     if (c.ultimoPar) etq.push('<span class="etq etq--ultimo">Último par</span>');
+    if (c.liquidacion && !ef.agotado) etq.push('<span class="etq etq--liquidacion">Liquidación</span>');
     if (!ef.agotado && ef.tallas && ef.tallas.length === 1) etq.push('<span class="etq">Solo talla ' + ef.tallas[0] + '</span>');
     const tallas = ef.tallas ? (ef.tallas.length > 1 ? 'Tallas ' + listaTexto(ef.tallas) : '') : 'Consulta tallas';
     const nombre = p.nombre + ' ' + c.nombre;
@@ -249,6 +250,7 @@
     $('#color').value = c ? c.nombre : '';
     $('#precio').value = ef && ef.precio ? (Math.round(ef.precio) === ef.precio ? String(ef.precio) : ef.precio.toFixed(2)) : '';
     $('#ultimo-par').checked = !!(c && c.ultimoPar);
+    $('#liquidacion').checked = !!(c && c.liquidacion);
     $('#agotado').checked = !!(ef && ef.agotado);
     $('#descripcion').value = p ? (p.descripcion || '') : '';
     $('#form-titulo').textContent = c ? 'Editar zapatilla' : 'Agregar zapatilla';
@@ -493,6 +495,7 @@
       tallas: tallas,
       tallasAgotadas: tallas.filter(t => form.tallas[t] === 'agotada'),
       ultimoPar: $('#ultimo-par').checked,
+      liquidacion: $('#liquidacion').checked,
       agotado: $('#agotado').checked,
       descripcion: $('#descripcion').value
     };

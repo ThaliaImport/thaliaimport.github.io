@@ -32,7 +32,7 @@
           "fotos": [
             "h08"
           ],
-          "precio": 30,
+          "precio": 35,
           "tallas": [
             39
           ]
@@ -52,7 +52,7 @@
             "h22",
             "h04"
           ],
-          "precio": 30,
+          "precio": 35,
           "tallas": [
             39
           ]
@@ -433,7 +433,8 @@
           "precio": 20,
           "tallas": [
             35
-          ]
+          ],
+          "liquidacion": true
         }
       ]
     },
@@ -449,14 +450,16 @@
           "nombre": "Blanco",
           "fotos": [
             "h30"
-          ]
+          ],
+          "liquidacion": true
         },
         {
           "id": "blanco-negro",
           "nombre": "Blanco con negro",
           "fotos": [
             "h29"
-          ]
+          ],
+          "liquidacion": true
         }
       ]
     },
@@ -475,7 +478,8 @@
           "precio": 30,
           "tallas": [
             40
-          ]
+          ],
+          "liquidacion": true
         }
       ]
     },
@@ -495,7 +499,8 @@
           "precio": 30,
           "tallas": [
             39
-          ]
+          ],
+          "liquidacion": true
         }
       ]
     }
