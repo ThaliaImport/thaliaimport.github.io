@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Cómo crear la clave · Panel de Thalia Import</title>
+  <link rel="icon" href="../img/logo/icono-a.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="admin.css">
+  <style>
+    .ayuda-pagina { max-width: 680px; margin: 0 auto; padding: 24px 16px 48px; }
+    .ayuda-pagina h1 { font-size: 1.6rem; margin: 8px 0 4px; }
+    .ayuda-pagina h2 { font-size: 1.25rem; margin: 30px 0 8px; }
+    .ayuda-pagina ol { padding-left: 1.4em; }
+    .ayuda-pagina li { margin: 0 0 14px; }
+    .pantallazo { display: block; margin-top: 6px; padding: 10px 14px; border-left: 4px solid var(--rosa); background: var(--superficie); border-radius: 0 12px 12px 0; color: var(--tinta-suave); font-size: .95rem; }
+    .pantallazo::before { content: "Lo que ves en la pantalla: "; font-weight: 600; color: var(--tinta); }
+    code, .dato { background: var(--tonal); padding: 1px 7px; border-radius: 6px; font-family: inherit; font-weight: 600; overflow-wrap: anywhere; }
+    .nota { background: var(--aviso); color: var(--aviso-tinta); padding: 12px 16px; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <main class="ayuda-pagina">
+    <p><a href="./">‹ Volver al panel</a></p>
+    <h1>Cómo crear la clave de acceso del panel</h1>
+    <p class="suave">Para Ronald. Se hace una sola vez, desde una computadora, con <strong>la cuenta de GitHub de Thalia Import</strong>
+      (la dueña del repositorio <span class="dato" data-ajuste="repo-completo">…</span>). Toma unos 5 minutos.</p>
+
+    <h2>1. Crear la clave en GitHub</h2>
+    <ol>
+      <li>Entra a <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com</a> con la cuenta de GitHub de Thalia Import
+        (usuario <span class="dato" data-ajuste="usuario">…</span>).
+        <span class="pantallazo">arriba a la derecha, la foto de perfil de esa cuenta. Si ves otra cuenta, cierra sesión y entra con la correcta.</span></li>
+      <li>Toca la foto de perfil (arriba a la derecha) → <strong>Settings</strong>.
+        <span class="pantallazo">un menú largo a la izquierda con "Public profile", "Account", "Appearance"…</span></li>
+      <li>Baja hasta el final del menú de la izquierda → <strong>Developer settings</strong>.</li>
+      <li>Elige <strong>Personal access tokens</strong> → <strong>Fine-grained tokens</strong> → botón verde <strong>Generate new token</strong>.
+        <span class="pantallazo">un formulario titulado "New fine-grained personal access token". Puede pedir la contraseña o un código de confirmación.</span></li>
+      <li><strong>Token name:</strong> escribe <code>Panel Thalia celular</code>. En <strong>Description</strong> puedes poner <code>Clave del panel de la tienda</code>.</li>
+      <li><strong>Resource owner:</strong> deja la cuenta <span class="dato" data-ajuste="usuario">…</span>.</li>
+      <li><strong>Expiration:</strong> elige <strong>No expiration</strong> si aparece en la lista. Si no aparece, elige <strong>Custom</strong> y la fecha más lejana que deje
+        (GitHub suele permitir hasta 1 año) y anota en tu calendario renovarla unos días antes.
+        <span class="pantallazo">un menú con 7, 30, 60, 90 días, "Custom" y a veces "No expiration".</span></li>
+      <li><strong>Repository access:</strong> marca <strong>Only select repositories</strong> y elige solo <span class="dato" data-ajuste="repo-completo">…</span>.
+        <span class="pantallazo">tres opciones redondas: "Public repositories (read-only)", "All repositories" y "Only select repositories". Debajo aparece un buscador de repositorios.</span></li>
+      <li><strong>Permissions</strong> → <strong>Repository permissions</strong> → busca <strong>Contents</strong> y cámbialo a <strong>Read and write</strong>.
+        No toques nada más (GitHub agrega solo "Metadata: Read-only", es normal).
+        <span class="pantallazo">una lista larga de permisos (Actions, Administration, Contents…), cada uno con un menú "No access". Solo Contents pasa a "Read and write".</span></li>
+      <li>Baja y toca <strong>Generate token</strong>. Revisa el resumen y confirma.</li>
+      <li>Aparece la clave: un texto largo que empieza con <code>github_pat_</code>. <strong>Cópiala ahora</strong>: GitHub no la vuelve a mostrar.
+        <span class="pantallazo">un cuadro verde con la clave y un botón para copiar.</span></li>
+    </ol>
+
+    <h2>2. Dejarla en el celular de Thalia</h2>
+    <ol>
+      <li>Mándate la clave a ti mismo de forma privada (o escríbela directo en su celular). No la publiques ni la mandes a grupos.</li>
+      <li>En el celular de Thalia, abre <span class="dato" id="url-panel">…</span> en Chrome.</li>
+      <li>Pega la clave en <strong>Clave de acceso</strong> y toca <strong>Entrar</strong>. Debe aparecer la lista de zapatillas.</li>
+      <li>En Chrome, menú ⋮ → <strong>Agregar a la pantalla principal</strong>, con el nombre <code>Mi tienda</code>. Así Thalia lo abre como una app.</li>
+      <li>Borra el mensaje donde te mandaste la clave.</li>
+    </ol>
+    <p>La clave queda guardada en ese celular. Si Thalia toca <strong>Salir</strong>, hay que volver a pegarla.</p>
+
+    <h2>Si algo pasa</h2>
+    <ul>
+      <li><strong>"Clave incorrecta o vencida"</strong>: la clave venció o se borró. Crea una nueva (pasos de arriba) y pégala.</li>
+      <li><strong>"Esta clave no tiene permiso para guardar"</strong>: falta <em>Contents: Read and write</em> o no se eligió el repositorio. Edita la clave en GitHub o crea otra.</li>
+      <li><strong>Se perdió o robaron el celular</strong>: en GitHub → Settings → Developer settings → Fine-grained tokens, entra a <code>Panel Thalia celular</code> y toca <strong>Delete</strong>. La clave deja de funcionar al instante.</li>
+    </ul>
+    <p class="nota">Quien tenga la clave puede cambiar la tienda. Por eso tiene permiso solo sobre este repositorio y solo para su contenido.</p>
+  </main>
+  <script src="../ajustes.js"></script>
+  <script>
+    (function () {
+      var g = (window.AJUSTES && window.AJUSTES.github) || {};
+      var datos = { usuario: g.usuario || '(ver ajustes.js)', 'repo-completo': (g.usuario || '?') + '/' + (g.repo || '?') };
+      document.querySelectorAll('[data-ajuste]').forEach(function (el) { el.textContent = datos[el.getAttribute('data-ajuste')]; });
+      var panel = new URL('./', location.href).href;
+      if (window.AJUSTES && window.AJUSTES.urlBase) panel = window.AJUSTES.urlBase.replace(/\/*$/, '/') + 'admin/';
+      document.getElementById('url-panel').textContent = panel;
+    })();
+  </script>
+</body>
+</html>

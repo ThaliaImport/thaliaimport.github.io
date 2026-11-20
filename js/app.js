@@ -1,15 +1,16 @@
 /* =====================================================================
    THALIA IMPORT · lógica de la tienda
    No hace falta tocar este archivo para agregar productos:
-   los productos están en productos.js y los ajustes en ajustes.js.
+   los productos están en productos.json (Thalia los cambia desde su panel,
+   admin/) y los ajustes en ajustes.js.
    ===================================================================== */
 (function () {
   'use strict';
 
   var A = window.AJUSTES || {};
   var M = A.mensajes || {};
-  var SECCIONES = Array.isArray(window.SECCIONES) ? window.SECCIONES : [];
-  var PRODUCTOS = Array.isArray(window.PRODUCTOS) ? window.PRODUCTOS : null;
+  var SECCIONES = [];
+  var PRODUCTOS = null;  // se llena con productos.json
   var RUTA_FOTOS = 'img/fotos/';
   var TALLAS_BASE = [35, 36, 37, 38, 39];
   var TEMAS = ['a', 'b', 'c'];
@@ -311,7 +312,7 @@
   function pintarCatalogo() {
     var cont = $('#catalogo');
     if (!PRODUCTOS) {
-      cont.insertAdjacentHTML('beforeend', '<div class="contenedor"><p class="catalogo__error">No se pudo cargar el catálogo. Si estás editando <strong>productos.js</strong>, revisa que no falte una coma, una comilla o una llave. Mientras tanto, escríbenos por WhatsApp 💕</p></div>');
+      cont.insertAdjacentHTML('beforeend', '<div class="contenedor"><p class="catalogo__error">No se pudo cargar el catálogo. Revisa tu conexión y vuelve a abrir la página. Mientras tanto, escríbenos por WhatsApp 💕</p></div>');
       return;
     }
     var html = '';
@@ -827,9 +828,31 @@
   }
 
   // ------------------------------------------------------------------ arranque
+  // El catálogo se pide sin caché para que los cambios del panel se vean pronto.
+  function cargarCatalogo() {
+    if (!window.fetch) return Promise.resolve(null);
+    return fetch('productos.json?v=' + Date.now(), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (datos) {
+        if (!datos || !Array.isArray(datos.productos)) throw new Error('productos.json sin productos');
+        return datos;
+      })
+      .catch(function (e) { if (window.console) console.warn('No se pudo cargar productos.json:', e); return null; });
+  }
+
   function iniciar() {
     prepararEnlaces();
     iniciarSelectorLogo();
+    cargarCatalogo().then(function (datos) {
+      if (datos) {
+        PRODUCTOS = datos.productos;
+        SECCIONES = Array.isArray(datos.secciones) ? datos.secciones : [];
+      }
+      iniciarCatalogo();
+    });
+  }
+
+  function iniciarCatalogo() {
     pintarCatalogo();
     if (!PRODUCTOS) return;
     pintarMenu();

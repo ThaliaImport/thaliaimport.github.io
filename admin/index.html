@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#3B2230">
+  <title>Mi panel · Thalia Import</title>
+  <link rel="icon" href="../img/logo/icono-a.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../img/logo/icono-a-180.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- ============================================================ CLAVE -->
+  <main id="pantalla-clave" class="pantalla pantalla--clave" hidden>
+    <img class="logo-grande" src="../img/logo/logo-a.svg" alt="Thalia Import" width="260" height="67">
+    <h1>Tu panel de la tienda</h1>
+    <p class="suave">Aquí cambias tus zapatillas, precios y tallas. Lo que guardes se ve en tu tienda en 1 minuto.</p>
+    <form id="form-clave" class="caja" autocomplete="off" novalidate>
+      <label for="clave" class="etiqueta-campo">Clave de acceso</label>
+      <input id="clave" name="clave" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Pega aquí tu clave">
+      <label class="ver-clave"><input type="checkbox" id="ver-clave"> Mostrar la clave</label>
+      <p id="clave-error" class="mensaje mensaje--error" role="alert" hidden></p>
+      <button type="submit" class="boton boton--principal boton--ancho" id="boton-entrar">Entrar</button>
+    </form>
+    <p class="suave centro">¿No tienes clave? Pídesela a Ronald.<br><a href="ayuda.html">Cómo se crea la clave</a></p>
+  </main>
+
+  <!-- ============================================================ CARGANDO -->
+  <div id="pantalla-cargando" class="pantalla pantalla--cargando" hidden>
+    <div class="ruedita" aria-hidden="true"></div>
+    <p id="cargando-texto" class="centro">Cargando tus productos…</p>
+    <button type="button" class="boton boton--principal" id="cargando-reintentar" hidden>Reintentar</button>
+    <button type="button" class="boton-texto" id="cargando-otra" hidden>Poner otra clave</button>
+  </div>
+
+  <!-- ============================================================ LISTA -->
+  <div id="pantalla-lista" class="pantalla" hidden>
+    <header class="cabecera">
+      <img class="cabecera__logo" src="../img/logo/logo-a-fondo-oscuro.svg" alt="Thalia Import" width="150" height="38">
+      <div class="cabecera__botones">
+        <a class="boton-cab" id="ver-tienda" href="../" target="_blank" rel="noopener">Ver tienda</a>
+        <button type="button" class="boton-cab" id="boton-salir">Salir</button>
+      </div>
+    </header>
+    <main class="contenido">
+      <h1 class="titulo">Mis zapatillas <span id="contador" class="contador"></span></h1>
+      <div class="buscador">
+        <label for="buscar" class="oculto">Buscar</label>
+        <input id="buscar" type="search" placeholder="🔍 Buscar por nombre o color" autocomplete="off">
+      </div>
+      <div class="filtros" id="filtros" role="group" aria-label="Sección"></div>
+      <ul id="lista" class="lista"></ul>
+      <p id="lista-vacia" class="suave centro" hidden>No hay zapatillas con ese nombre.</p>
+      <button type="button" class="boton-texto" id="boton-actualizar">↻ Actualizar la lista</button>
+    </main>
+    <div class="barra-abajo">
+      <button type="button" class="boton boton--principal boton--ancho boton--grande" id="boton-agregar">+ Agregar zapatilla</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ FORMULARIO -->
+  <div id="pantalla-form" class="pantalla" hidden>
+    <header class="cabecera cabecera--form">
+      <button type="button" class="boton-cab boton-cab--atras" id="boton-volver" aria-label="Volver a la lista">‹ Volver</button>
+      <h1 id="form-titulo" class="cabecera__titulo">Agregar zapatilla</h1>
+    </header>
+    <form id="form" class="contenido form" novalidate autocomplete="off">
+      <!-- Fotos -->
+      <section class="campo" id="campo-fotos">
+        <h2 class="etiqueta-campo">Fotos</h2>
+        <p class="ayuda">La primera es la que sale en la tienda. Puedes poner varias.</p>
+        <ul id="fotos" class="fotos"></ul>
+        <div class="fotos-botones">
+          <label class="boton boton--suave">📷 Tomar foto
+            <input type="file" id="foto-camara" accept="image/*" capture="environment" class="oculto-input">
+          </label>
+          <label class="boton boton--suave">🖼️ De la galería
+            <input type="file" id="foto-galeria" accept="image/*" multiple class="oculto-input">
+          </label>
+        </div>
+        <p class="mensaje mensaje--error" data-error="fotos" hidden></p>
+      </section>
+
+      <!-- Nombre -->
+      <section class="campo">
+        <label for="nombre" class="etiqueta-campo">Nombre del modelo</label>
+        <input id="nombre" list="modelos" autocomplete="off" autocapitalize="sentences" placeholder="Ej: Plataforma estrella">
+        <datalist id="modelos"></datalist>
+        <p id="nombre-info" class="mensaje mensaje--info" hidden></p>
+        <p class="mensaje mensaje--error" data-error="nombre" hidden></p>
+      </section>
+
+      <!-- Color -->
+      <section class="campo">
+        <label for="color" class="etiqueta-campo">Color</label>
+        <input id="color" autocomplete="off" autocapitalize="sentences" placeholder="Ej: Blanco con rosa">
+        <p class="mensaje mensaje--error" data-error="color" hidden></p>
+      </section>
+
+      <div id="aviso-marca" class="mensaje mensaje--aviso" hidden>
+        <p>Mejor no pongas marcas, TikTok y Facebook lo castigan 💕</p>
+        <button type="button" class="boton boton--suave boton--chico" id="usar-sin-marca" hidden></button>
+      </div>
+
+      <!-- Sección -->
+      <section class="campo">
+        <h2 class="etiqueta-campo">Sección</h2>
+        <div class="secciones" id="secciones" role="radiogroup" aria-label="Sección"></div>
+        <p class="mensaje mensaje--error" data-error="seccion" hidden></p>
+      </section>
+
+      <!-- Precio -->
+      <section class="campo">
+        <label for="precio" class="etiqueta-campo">Precio <span class="opcional">(opcional)</span></label>
+        <div class="precio">
+          <span class="precio__soles" aria-hidden="true">S/</span>
+          <input id="precio" type="text" inputmode="decimal" autocomplete="off" placeholder="Ej: 39.90">
+        </div>
+        <p class="ayuda">Si lo dejas vacío, la tienda dice "Consultar precio".</p>
+        <p class="mensaje mensaje--error" data-error="precio" hidden></p>
+      </section>
+
+      <!-- Tallas -->
+      <section class="campo">
+        <h2 class="etiqueta-campo">Tallas que tienes</h2>
+        <p class="ayuda">Toca las tallas que hay. Si una se acaba, tócala otra vez y queda <s>tachada</s>.</p>
+        <div class="tallas" id="tallas"></div>
+        <button type="button" class="talla-nose" id="talla-nose" aria-pressed="false">No sé / consultar</button>
+      </section>
+
+      <!-- Interruptores -->
+      <section class="campo">
+        <label class="interruptor">
+          <span><strong>Último par</strong><span class="ayuda">Sale la etiqueta "Último par"</span></span>
+          <input type="checkbox" id="ultimo-par" role="switch"><span class="interruptor__pista" aria-hidden="true"></span>
+        </label>
+        <label class="interruptor">
+          <span><strong>Agotado</strong><span class="ayuda">Se ve en gris y no se puede pedir</span></span>
+          <input type="checkbox" id="agotado" role="switch"><span class="interruptor__pista" aria-hidden="true"></span>
+        </label>
+      </section>
+
+      <!-- Descripción -->
+      <section class="campo">
+        <label for="descripcion" class="etiqueta-campo">Descripción <span class="opcional">(opcional)</span></label>
+        <textarea id="descripcion" rows="3" autocapitalize="sentences"></textarea>
+        <button type="button" class="boton boton--suave boton--chico" id="usar-sugerencia">✨ Escribirla por mí</button>
+        <p id="descripcion-info" class="ayuda" hidden>Esta descripción es del modelo: se ve en todos sus colores.</p>
+      </section>
+
+      <div class="form-final">
+        <button type="submit" class="boton boton--principal boton--ancho boton--grande" id="boton-guardar">Guardar</button>
+        <button type="button" class="boton boton--peligro boton--ancho" id="boton-eliminar" hidden>Eliminar esta zapatilla</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============================================================ ESTADO DEL GUARDADO -->
+  <div id="estado" class="velo" hidden>
+    <div class="estado caja" role="alertdialog" aria-modal="true" aria-labelledby="estado-texto">
+      <div class="ruedita" id="estado-ruedita" aria-hidden="true"></div>
+      <div class="estado__icono" id="estado-icono" aria-hidden="true" hidden></div>
+      <p id="estado-texto" class="estado__texto">Guardando…</p>
+      <p id="estado-detalle" class="suave" hidden></p>
+      <div class="estado__botones" id="estado-botones" hidden>
+        <a class="boton boton--principal boton--ancho" id="estado-tienda" href="../" target="_blank" rel="noopener" hidden>Ver mi tienda</a>
+        <button type="button" class="boton boton--principal boton--ancho" id="estado-reintentar" hidden>Reintentar</button>
+        <button type="button" class="boton boton--suave boton--ancho" id="estado-clave" hidden>Poner otra clave</button>
+        <button type="button" class="boton boton--suave boton--ancho" id="estado-cerrar">Seguir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ CONFIRMAR -->
+  <div id="confirmar" class="velo" hidden>
+    <div class="caja confirmar" role="alertdialog" aria-modal="true" aria-labelledby="confirmar-texto">
+      <p id="confirmar-texto" class="estado__texto"></p>
+      <p id="confirmar-detalle" class="suave"></p>
+      <div class="estado__botones">
+        <button type="button" class="boton boton--peligro-lleno boton--ancho" id="confirmar-si">Sí, eliminar</button>
+        <button type="button" class="boton boton--suave boton--ancho" id="confirmar-no">No, volver</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
+
+  <script src="../ajustes.js"></script>
+  <script src="../js/pagina-producto.js"></script>
+  <script src="catalogo.js"></script>
+  <script src="github.js"></script>
+  <script src="fotos.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

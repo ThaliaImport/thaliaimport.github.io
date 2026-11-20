@@ -1,0 +1,6 @@
+# Texto siempre con saltos de línea LF (igual que lo que guarda el panel desde el celular)
+* text=auto eol=lf
+*.webp binary
+*.jpg binary
+*.jpeg binary
+*.png binary

@@ -1,0 +1,11 @@
+# Nada de herramientas, notas internas ni dependencias en la web publicada
+_trabajo/
+herramientas/
+node_modules/
+capturas/
+LEEME.md
+*.ps1
+*.lock
+.navegador.lock
+Thumbs.db
+.DS_Store
