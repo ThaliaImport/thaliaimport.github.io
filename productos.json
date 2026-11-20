@@ -203,8 +203,7 @@
           "id": "blanco-negro",
           "nombre": "Blanco con negro",
           "fotos": [
-            "51",
-            "h16"
+            "51"
           ],
           "precio": 45,
           "tallas": [
@@ -243,8 +242,7 @@
           "id": "palo-rosa",
           "nombre": "Palo rosa",
           "fotos": [
-            "49",
-            "h21"
+            "49"
           ],
           "precio": 50,
           "tallas": [
@@ -263,8 +261,7 @@
           "id": "blanco-multicolor",
           "nombre": "Blanco multicolor",
           "fotos": [
-            "46",
-            "h13"
+            "46"
           ],
           "precio": 60,
           "tallas": [
@@ -283,8 +280,7 @@
           "id": "azul-rosa",
           "nombre": "Azul marino con rosa",
           "fotos": [
-            "52",
-            "h18"
+            "52"
           ],
           "precio": 60,
           "tallas": [
@@ -304,8 +300,7 @@
           "id": "rosa-lila",
           "nombre": "Rosa con lila",
           "fotos": [
-            "39",
-            "h14"
+            "39"
           ],
           "precio": 65,
           "tallas": [
@@ -324,8 +319,7 @@
           "id": "negro-fucsia",
           "nombre": "Negro con fucsia",
           "fotos": [
-            "40",
-            "h15"
+            "40"
           ],
           "precio": 65,
           "tallas": [
@@ -346,8 +340,7 @@
           "id": "negro-rosa-lila",
           "nombre": "Negro con rosa y lila",
           "fotos": [
-            "41",
-            "h17"
+            "41"
           ],
           "precio": 65,
           "tallas": [
@@ -386,8 +379,7 @@
           "id": "crema-menta",
           "nombre": "Crema con menta",
           "fotos": [
-            "48",
-            "h20"
+            "48"
           ],
           "precio": 65,
           "tallas": [
@@ -493,8 +485,7 @@
           "id": "blanco-gris-rosa",
           "nombre": "Blanco con gris y rosa",
           "fotos": [
-            "50",
-            "h11"
+            "50"
           ],
           "precio": 30,
           "tallas": [
