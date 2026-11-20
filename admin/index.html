@@ -50,7 +50,7 @@
       <h1 class="titulo">Mis zapatillas <span id="contador" class="contador"></span></h1>
       <div class="buscador">
         <label for="buscar" class="oculto">Buscar</label>
-        <input id="buscar" type="search" placeholder="🔍 Buscar por nombre o color" autocomplete="off">
+        <input id="buscar" type="search" placeholder="🔍 Buscar por nombre, color o código" autocomplete="off">
       </div>
       <div class="filtros" id="filtros" role="group" aria-label="Sección"></div>
       <ul id="lista" class="lista"></ul>
@@ -69,6 +69,7 @@
       <h1 id="form-titulo" class="cabecera__titulo">Agregar zapatilla</h1>
     </header>
     <form id="form" class="contenido form" novalidate autocomplete="off">
+      <p id="form-codigo" class="form-codigo"></p>
       <!-- Fotos -->
       <section class="campo" id="campo-fotos">
         <h2 class="etiqueta-campo">Fotos</h2>

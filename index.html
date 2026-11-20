@@ -392,8 +392,9 @@
         <div class="barra-duo__lista" id="barra-duo-pares"></div>
       </div>
       <div class="barra-duo__acciones">
-        <a class="boton boton--primario barra-duo__pedir" id="duo-cta" href="#" target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg><span>Pedir mi dúo<span class="solo-ancho"> por WhatsApp</span></span></a>
-        <button type="button" class="boton boton--borde boton--fotos" id="duo-fotos" hidden><svg class="icono" aria-hidden="true"><use href="#i-camara"/></svg><span class="boton__lineas"><span>Enviar con fotos</span><small>Elige el chat de Thalia Import</small></span></button>
+        <button type="button" class="boton boton--primario boton--fotos" id="duo-fotos" hidden><svg class="icono" aria-hidden="true"><use href="#i-camara"/></svg><span>Enviar pedido con foto</span></button>
+        <p class="nota-envio" id="duo-fotos-nota" hidden>Se abre tu WhatsApp: elige el chat de Thalia Import 💕</p>
+        <a class="boton boton--primario barra-duo__pedir" id="duo-cta" href="#" target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg><span data-texto-cta>Pedir mi dúo<span class="solo-ancho"> por WhatsApp</span></span></a>
       </div>
     </div>
     <p class="barra-duo__aviso" id="duo-aviso" role="status" aria-live="polite"></p>
@@ -413,6 +414,7 @@
         <div class="ficha__detalle">
           <div class="ficha__etiquetas" id="ficha-etiquetas"></div>
           <h2 class="ficha__titulo" id="ficha-titulo">Producto</h2>
+          <p class="ficha__codigo" id="ficha-codigo" hidden></p>
           <p class="ficha__precio" id="ficha-precio"></p>
           <p class="ficha__desc" id="ficha-desc"></p>
 
@@ -440,13 +442,14 @@
           </fieldset>
 
           <div class="ficha__extras">
-            <button type="button" class="boton boton--borde boton--fotos" id="ficha-fotos" hidden><svg class="icono" aria-hidden="true"><use href="#i-camara"/></svg><span class="boton__lineas"><span>Enviar con fotos</span><small>Elige el chat de Thalia Import</small></span></button>
             <button type="button" class="boton boton--suave" id="ficha-duo" aria-pressed="false"><svg class="icono" aria-hidden="true"><use href="#i-mas"/></svg><span id="ficha-duo-texto">Agregar a mi dúo</span></button>
           </div>
 
           <div class="ficha__acciones">
             <p class="aviso" id="ficha-aviso" role="alert" hidden></p>
-            <a class="boton boton--primario boton--ancho boton--grande" id="ficha-cta" href="#" target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg><span id="ficha-cta-texto">Pedir por WhatsApp</span></a>
+            <button type="button" class="boton boton--primario boton--ancho boton--grande boton--fotos" id="ficha-fotos" hidden><svg class="icono" aria-hidden="true"><use href="#i-camara"/></svg><span>Enviar pedido con foto</span></button>
+            <p class="nota-envio" id="ficha-fotos-nota" hidden>Se abre tu WhatsApp: elige el chat de Thalia Import 💕</p>
+            <a class="boton boton--primario boton--ancho boton--grande" id="ficha-cta" href="#" target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg><span id="ficha-cta-texto" data-texto-cta>Pedir por WhatsApp</span></a>
             <p class="ficha__pie">Pagas por Yape · Envío a todo el Perú por Shalom, Olva o Marvisur</p>
           </div>
         </div>

@@ -965,6 +965,7 @@ html[data-tema="a"] .tarjeta { border-color: transparent; }
 }
 
 /* ============================ BARRA DEL DÚO ============================ */
+/* Celular: barra abajo con miniaturas grandes. Escritorio (≥ 900 px): panel a la derecha. */
 .barra-duo {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 45;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
@@ -974,42 +975,53 @@ html[data-tema="a"] .tarjeta { border-color: transparent; }
   animation: hoja-sube .25s ease-out;
 }
 .barra-duo[hidden] { display: none; }
-.barra-duo__caja { display: flex; align-items: center; gap: 10px; max-width: 760px; margin: 0 auto; }
-.barra-duo__pares { flex: 1 1 auto; min-width: 0; }
+.barra-duo__caja { display: grid; gap: 10px; max-width: 760px; margin: 0 auto; }
+.barra-duo__pares { min-width: 0; }
 .barra-duo__titulo {
-  margin: 0 0 6px; font-family: var(--fuente-texto); font-size: 0.75rem; font-weight: 700;
+  margin: 0 0 8px; font-family: var(--fuente-texto); font-size: 0.75rem; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--acento-tinta);
 }
-.barra-duo__lista { display: flex; gap: 10px; }
-.par-duo { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 62px; }
+.barra-duo__lista { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.par-duo { position: relative; display: flex; align-items: flex-start; gap: 9px; min-width: 0; }
 .par-duo__foto {
-  display: grid; place-items: center; width: 52px; height: 52px; overflow: hidden;
-  border: 2px solid var(--seleccion); border-radius: 12px; background: var(--superficie-2);
+  flex: 0 0 auto; display: grid; place-items: center; width: 80px; height: 80px; overflow: hidden;
+  border: 2px solid var(--seleccion); border-radius: 14px; background: var(--superficie-2);
 }
 .par-duo__foto img { width: 100%; height: 100%; object-fit: cover; }
 .par-duo--vacio .par-duo__foto { border: 2px dashed var(--borde-fuerte); color: var(--tinta-suave); }
-.par-duo--vacio .par-duo__foto .icono { width: 22px; height: 22px; }
+.par-duo--vacio .par-duo__foto .icono { width: 26px; height: 26px; }
 .par-duo__quitar {
-  position: absolute; top: -7px; right: -1px; display: grid; place-items: center;
-  width: 24px; height: 24px; padding: 0; border: 2px solid var(--superficie); border-radius: 50%;
+  position: absolute; top: -8px; left: 62px; display: grid; place-items: center;
+  width: 26px; height: 26px; padding: 0; border: 2px solid var(--superficie); border-radius: 50%;
   background: var(--tinta); color: var(--superficie); cursor: pointer;
 }
 .par-duo__quitar::before { content: ""; position: absolute; inset: -9px; }
 .par-duo__quitar .icono { width: 12px; height: 12px; }
-.par-duo__nombre { display: none; }
-.par-duo__talla { font-family: var(--fuente-texto); font-size: 0.75rem; font-weight: 600; white-space: nowrap; color: var(--tinta); }
-.par-duo--vacio .par-duo__talla { color: var(--tinta-suave); font-weight: 500; }
+.par-duo__info { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; flex: 1 1 auto; font-family: var(--fuente-texto); }
+.par-duo__codigo { font-size: 0.75rem; font-weight: 700; color: var(--acento-tinta); font-variant-numeric: lining-nums; }
+.par-duo__nombre {
+  font-size: 0.8125rem; font-weight: 600; line-height: 1.2; color: var(--tinta);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.par-duo__color, .par-duo__precio { display: none; }
+.par-duo__precio { font-weight: 700; color: var(--acento-tinta); font-variant-numeric: lining-nums; }
+.par-duo__precio--liquidacion { color: #C8102E; }
+.par-duo__talla { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; color: var(--tinta); }
+.par-duo--vacio .par-duo__nombre { color: var(--tinta-suave); }
+.par-duo--vacio .par-duo__talla { font-size: 0.6875rem; font-weight: 500; color: var(--tinta-suave); white-space: normal; line-height: 1.2; }
 .par-duo__talla select {
-  max-width: 66px; min-height: 30px; padding: 2px 4px;
-  border: 1.5px solid var(--borde-fuerte); border-radius: 8px;
+  max-width: 100%; min-height: 34px; padding: 2px 6px;
+  border: 1.5px solid var(--borde-fuerte); border-radius: 9px;
   background: var(--superficie); color: var(--tinta);
-  font-family: var(--fuente-texto); font-size: 0.8125rem; font-weight: 600;
+  font-family: var(--fuente-texto); font-size: 0.875rem; font-weight: 600;
 }
 .par-duo--falta .par-duo__talla select { border-color: var(--acento-tinta); box-shadow: 0 0 0 2px var(--aviso); }
-.barra-duo__acciones { display: flex; flex-direction: column; gap: 6px; flex: 0 0 auto; width: min(54%, 230px); }
-.barra-duo__acciones .boton { width: 100%; min-height: 46px; padding: 8px 10px; font-size: 0.9375rem; }
+.barra-duo__acciones { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.barra-duo__acciones .boton { flex: 1 1 auto; min-height: 48px; padding: 8px 14px; font-size: 0.9375rem; }
 .barra-duo__acciones .boton[hidden] { display: none; }
-.barra-duo__acciones .boton--fotos .icono { display: none; }
+.barra-duo__acciones .boton--solo-texto { flex: 0 1 auto; min-height: 48px; font-size: 0.875rem; }
+.nota-envio { flex-basis: 100%; margin: 2px 0 0; font-family: var(--fuente-texto); font-size: 0.75rem; text-align: center; color: var(--tinta-suave); }
+.nota-envio[hidden] { display: none; }
 .barra-duo__aviso {
   position: absolute; left: 12px; right: 12px; bottom: 100%; margin: 0 0 8px; padding: 9px 14px;
   border-radius: 12px; background: var(--tinta); color: var(--superficie);
@@ -1022,23 +1034,62 @@ html.con-duo body { padding-bottom: var(--alto-barra, 0px); }
 html.con-duo .flotante-wa { display: none; }
 html.con-duo .selector-logo { bottom: calc(var(--alto-barra, 0px) + 12px); }
 @media (min-width: 480px) { .solo-ancho { display: inline; } }
-@media (min-width: 720px) {
+
+/* Tablet: barra flotante centrada, pares con color y precio */
+@media (min-width: 720px) and (max-width: 899px) {
   .barra-duo {
     left: 50%; right: auto; bottom: 14px; width: min(780px, calc(100% - 32px));
     transform: translateX(-50%); border: 1px solid var(--borde); border-radius: 20px; padding: 12px 16px;
   }
-  .barra-duo__caja { gap: 18px; }
-  .barra-duo__lista { gap: 16px; }
-  .par-duo { flex-direction: row; align-items: center; width: auto; gap: 10px; }
-  .par-duo__quitar { left: 38px; right: auto; }
-  .par-duo__info { display: flex; flex-direction: column; }
-  .par-duo__nombre { display: block; max-width: 150px; font-size: 0.8125rem; font-weight: 600; line-height: 1.25; }
-  .barra-duo__acciones { flex-direction: row; width: auto; }
-  .barra-duo__acciones .boton { width: auto; white-space: nowrap; }
-  .barra-duo__acciones .boton--fotos .icono { display: inline-block; }
+  .barra-duo__caja { grid-template-columns: minmax(0, 1fr) 240px; align-items: center; gap: 16px; }
+  .par-duo__foto { width: 88px; height: 88px; }
+  .par-duo__quitar { left: 70px; }
+  .par-duo__precio { display: block; font-size: 0.8125rem; }
+  .barra-duo__acciones { flex-direction: column; flex-wrap: nowrap; }
+  .barra-duo__acciones .boton, .barra-duo__acciones .boton--solo-texto { flex: 0 0 auto; width: 100%; }
   html.con-duo body { padding-bottom: calc(var(--alto-barra, 0px) + 20px); }
   html.con-duo .selector-logo { bottom: calc(var(--alto-barra, 0px) + 28px); }
 }
+
+/* Escritorio: panel fijo a la derecha; las tarjetas se corren para no quedar tapadas */
+@media (min-width: 900px) {
+  .barra-duo {
+    left: auto; right: 20px; bottom: 20px; width: 352px; max-height: calc(100vh - 40px); overflow-y: auto;
+    padding: 18px 18px 16px; border: 1px solid var(--borde); border-radius: 22px;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+    animation: duo-entra .25s ease-out;
+  }
+  .barra-duo__caja { gap: 16px; }
+  .barra-duo__titulo { font-size: 0.875rem; margin-bottom: 12px; }
+  .barra-duo__lista { grid-template-columns: 1fr; gap: 14px; }
+  .par-duo { align-items: center; gap: 14px; }
+  .par-duo__foto { width: 128px; height: 128px; border-radius: 16px; }
+  .par-duo__quitar { top: -9px; left: 110px; width: 30px; height: 30px; }
+  .par-duo__quitar .icono { width: 13px; height: 13px; }
+  .par-duo__codigo { font-size: 0.8125rem; }
+  .par-duo__nombre { font-size: 1rem; }
+  .par-duo__color { display: block; font-size: 0.875rem; color: var(--tinta-suave); line-height: 1.25; }
+  .par-duo__precio { display: block; font-size: 1rem; }
+  .par-duo__talla { font-size: 0.9375rem; }
+  .par-duo__talla select { min-height: 40px; min-width: 110px; font-size: 0.9375rem; }
+  .par-duo--vacio .par-duo__nombre { font-size: 1rem; }
+  .par-duo--vacio .par-duo__talla { font-size: 0.8125rem; }
+  .barra-duo__acciones { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+  .barra-duo__acciones .boton, .barra-duo__acciones .boton--solo-texto { flex: 0 0 auto; width: 100%; min-height: 52px; font-size: 1rem; }
+  .barra-duo__aviso { left: 0; right: 0; }
+  html.con-duo body { padding-bottom: 0; padding-right: 392px; }
+  html.con-duo .selector-logo { bottom: calc(18px + env(safe-area-inset-bottom)); }
+}
+@keyframes duo-entra { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+/* Código del modelo, "Enviar solo texto" y nota del envío con foto */
+.tarjeta__codigo { margin-left: 2px; font-size: 0.8125rem; font-weight: 600; color: var(--acento-tinta); white-space: nowrap; font-variant-numeric: lining-nums; }
+.ficha__codigo { margin: -2px 0 10px; font-family: var(--fuente-texto); font-size: 0.9375rem; font-weight: 600; letter-spacing: 0.02em; color: var(--acento-tinta); font-variant-numeric: lining-nums; }
+.ficha__codigo[hidden] { display: none; }
+.boton--solo-texto { background: transparent; color: var(--tinta); border-color: var(--borde-fuerte); min-height: 46px; font-size: 0.9375rem; }
+.boton--solo-texto:hover { background: var(--tonal); }
+.ficha__acciones .boton--solo-texto { margin-top: 8px; }
+.ficha__acciones .nota-envio { margin-top: 6px; font-size: 0.8125rem; }
 
 /* ======================= MOVIMIENTO REDUCIDO ======================= */
 @media (prefers-reduced-motion: reduce) {

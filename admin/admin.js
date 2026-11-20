@@ -170,7 +170,7 @@
       '<div class="item__fila">' +
         '<div class="item__foto">' + imgFoto((c.fotos || [])[0], 'tarjeta', nombre) + '</div>' +
         '<div class="item__datos">' +
-          '<h2 class="item__nombre">' + esc(p.nombre) + '</h2>' +
+          '<h2 class="item__nombre">' + (Catalogo.codigoTexto(c) ? '<span class="item__codigo">' + Catalogo.codigoTexto(c) + '</span> ' : '') + esc(p.nombre) + '</h2>' +
           '<p class="item__color">' + esc(c.nombre) + '</p>' +
           '<p class="item__precio' + (ef.precio ? '' : ' item__precio--sin') + '">' + (ef.precio ? esc(precioTexto(ef.precio)) : 'Sin precio') +
             (tallas ? ' <span class="suave" style="font-weight:500;font-size:.92rem">· ' + esc(tallas) + '</span>' : '') + '</p>' +
@@ -190,12 +190,15 @@
   function pintarLista() {
     if (!base) return;
     const q = Catalogo.normal(filtro.texto);
+    // "07" o "#07" busca por código
+    const porCodigo = /^#?\d{1,4}$/.test(q) ? Number(q.replace('#', '')) : null;
     let total = 0;
     const html = [];
     base.catalogo.productos.forEach(p => (p.colores || []).forEach(c => {
       total++;
       if (filtro.seccion && p.seccion !== filtro.seccion) return;
-      if (q && Catalogo.normal(p.nombre + ' ' + c.nombre).indexOf(q) === -1) return;
+      if (porCodigo !== null) { if (Number(c.codigo) !== porCodigo) return; }
+      else if (q && Catalogo.normal(p.nombre + ' ' + c.nombre).indexOf(q) === -1) return;
       html.push(itemHtml(p, c));
     }));
     $('#lista').innerHTML = html.join('');
@@ -254,6 +257,10 @@
     $('#agotado').checked = !!(ef && ef.agotado);
     $('#descripcion').value = p ? (p.descripcion || '') : '';
     $('#form-titulo').textContent = c ? 'Editar zapatilla' : 'Agregar zapatilla';
+    const codigo = c && c.codigo ? Catalogo.codigoTexto(c) : Catalogo.codigoTexto({ codigo: Catalogo.siguienteCodigo(cat) });
+    $('#form-codigo').innerHTML = c && c.codigo
+      ? 'Código <strong>' + codigo + '</strong> · así la reconoces en los pedidos'
+      : 'Código <strong>' + codigo + '</strong> · se le pone solo al guardar';
     $('#boton-eliminar').hidden = !c;
     $('#modelos').innerHTML = cat.productos.map(x => '<option value="' + esc(x.nombre) + '"></option>').join('');
     $$('[data-error]').forEach(el => { el.hidden = true; });

@@ -25,6 +25,11 @@
     var t = (Array.isArray(c.tallas) && c.tallas.length) ? c.tallas : (Array.isArray(p.tallas) && p.tallas.length ? p.tallas : null);
     return t ? t.map(Number).filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; }) : null;
   }
+  // "#07 " (con espacio) o "" si el color no tiene código
+  function codigoTexto(c) {
+    var n = Number(c && c.codigo);
+    return n > 0 ? '#' + (n < 10 ? '0' + n : String(n)) + ' ' : '';
+  }
   function normalizarBase(urlBase) { return String(urlBase || '').trim().replace(/\/*$/, '/'); }
   function archivoDe(p, c) { return p.id + '-' + c.id + '.html'; }
 
@@ -45,7 +50,7 @@
       agotado ? 'Agotado' : (precio ? precioTexto(precio) : 'Precio por WhatsApp'),
       agotado ? '' : (c.ultimoPar ? 'Último par, talla ' + (tallas ? tallas[0] : '') : (tallas ? (tallas.length === 1 ? 'Solo talla ' + tallas[0] : 'Tallas ' + listaTexto(tallas)) : 'Consulta tallas'))
     ].filter(Boolean).join(' · ');
-    var titulo = p.nombre + ' ' + c.nombre;
+    var titulo = codigoTexto(c) + p.nombre + ' ' + c.nombre;
     var html = '<!doctype html>\n' +
 '<html lang="es-PE">\n' +
 '<head>\n' +

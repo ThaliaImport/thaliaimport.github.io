@@ -89,7 +89,7 @@
 
   // Ordena las claves del color como en el resto del archivo.
   function colorOrdenado(c) {
-    var orden = ['id', 'nombre', 'fotos', 'precio', 'tallas', 'tallasAgotadas', 'ultimoPar', 'liquidacion', 'agotado'];
+    var orden = ['id', 'codigo', 'nombre', 'fotos', 'precio', 'tallas', 'tallasAgotadas', 'ultimoPar', 'liquidacion', 'agotado'];
     var out = {};
     orden.forEach(function (k) { if (c[k] !== undefined) out[k] = c[k]; });
     Object.keys(c).forEach(function (k) { if (out[k] === undefined && c[k] !== undefined) out[k] = c[k]; });
@@ -110,6 +110,30 @@
       return (p.colores || []).some(function (c) { return c !== salvo && c.id === id; }) || paginas[p.id + '-' + id];
     });
   }
+  // Código corto (#07) del próximo color: el mayor usado + 1. "ultimoCodigo" recuerda el mayor
+  // que existió, así un código borrado nunca se vuelve a usar.
+  function maxCodigo(cat) {
+    var m = Number(cat.ultimoCodigo) || 0;
+    cat.productos.forEach(function (p) { (p.colores || []).forEach(function (c) { if (Number(c.codigo) > m) m = Number(c.codigo); }); });
+    return m;
+  }
+  function siguienteCodigo(cat) { return maxCodigo(cat) + 1; }
+  function anotarCodigo(cat, n) {
+    var m = Math.max(maxCodigo(cat), n);
+    if (cat.ultimoCodigo === undefined) {
+      // Se inserta antes de "productos" para que el archivo quede ordenado.
+      var copia = {};
+      Object.keys(cat).forEach(function (k) { if (k === 'productos') copia.ultimoCodigo = m; copia[k] = cat[k]; });
+      Object.keys(cat).forEach(function (k) { delete cat[k]; });
+      Object.keys(copia).forEach(function (k) { cat[k] = copia[k]; });
+    }
+    cat.ultimoCodigo = m;
+  }
+  function codigoTexto(c) {
+    var n = Number(c && c.codigo);
+    return n > 0 ? '#' + (n < 10 ? '0' + n : String(n)) : '';
+  }
+
   function idProductoNuevo(cat, nombre) {
     return unico(slug(nombre), function (id) { return !!productoPorId(cat, id); });
   }
@@ -181,7 +205,9 @@
         if (!p0.colores.length) cat.productos.splice(cat.productos.indexOf(p0), 1);
       }
       cid = idColorNuevo(cat, destino, d.color, null);
-      c = aplicarDatosColor({ id: cid }, d);
+      var codigo = (c0 && Number(c0.codigo) > 0) ? Number(c0.codigo) : siguienteCodigo(cat);   // al mover de modelo, conserva su código
+      c = aplicarDatosColor({ id: cid, codigo: codigo }, d);
+      anotarCodigo(cat, codigo);
       destino.colores.push(c);
     }
     return { catalogo: cat, pid: destino.id, cid: cid, titulo: destino.nombre + ' ' + c.nombre };
@@ -202,6 +228,7 @@
     var c = p && colorPorId(p, op.cid);
     if (!c) throw ErrorCatalogo('yaNoExiste', 'Esa zapatilla ya no está en la tienda.');
     var titulo = p.nombre + ' ' + c.nombre;
+    anotarCodigo(cat, 0);   // recuerda el código más alto antes de borrar: no se reutiliza
     p.colores.splice(p.colores.indexOf(c), 1);
     if (!p.colores.length) cat.productos.splice(cat.productos.indexOf(p), 1);
     return { catalogo: cat, pid: null, cid: null, titulo: titulo };
@@ -242,6 +269,7 @@
   return {
     aplicar: aplicar, efectivo: efectivo, textoJson: textoJson, fotosUsadas: fotosUsadas,
     marcasEn: marcasEn, quitarMarcas: quitarMarcas, slug: slug, normal: normal, leerPrecio: leerPrecio,
+    siguienteCodigo: siguienteCodigo, codigoTexto: codigoTexto,
     productoPorId: productoPorId, colorPorId: colorPorId, productoPorNombre: productoPorNombre, MARCAS: MARCAS
   };
 });

@@ -19,6 +19,7 @@
       "descripcion": "Básicos que combinan con todo: jean, falda o buzo."
     }
   ],
+  "ultimoCodigo": 30,
   "productos": [
     {
       "id": "plataforma-alta",
@@ -28,6 +29,7 @@
       "colores": [
         {
           "id": "crema-rosa",
+          "codigo": 1,
           "nombre": "Crema con rosa",
           "fotos": [
             "h08"
@@ -47,6 +49,7 @@
       "colores": [
         {
           "id": "crema-gris",
+          "codigo": 2,
           "nombre": "Crema con gris",
           "fotos": [
             "h22",
@@ -59,6 +62,7 @@
         },
         {
           "id": "blanco-beige",
+          "codigo": 3,
           "nombre": "Blanco con beige",
           "fotos": [
             "h03"
@@ -75,6 +79,7 @@
       "colores": [
         {
           "id": "negro",
+          "codigo": 4,
           "nombre": "Negro",
           "fotos": [
             "h31"
@@ -97,6 +102,7 @@
       "colores": [
         {
           "id": "blanco-rosa",
+          "codigo": 5,
           "nombre": "Blanco con rosa",
           "fotos": [
             "h23"
@@ -104,6 +110,7 @@
         },
         {
           "id": "blanco-negro",
+          "codigo": 6,
           "nombre": "Blanco con negro",
           "fotos": [
             "h24"
@@ -111,6 +118,7 @@
         },
         {
           "id": "negro",
+          "codigo": 7,
           "nombre": "Negro",
           "fotos": [
             "h25"
@@ -126,6 +134,7 @@
       "colores": [
         {
           "id": "blanco-negro",
+          "codigo": 8,
           "nombre": "Blanco con negro",
           "fotos": [
             "h05"
@@ -141,6 +150,7 @@
       "colores": [
         {
           "id": "blanco",
+          "codigo": 9,
           "nombre": "Blanco",
           "fotos": [
             "h06"
@@ -156,6 +166,7 @@
       "colores": [
         {
           "id": "negro",
+          "codigo": 10,
           "nombre": "Negro",
           "fotos": [
             "h07"
@@ -172,6 +183,7 @@
       "colores": [
         {
           "id": "crema-rosa",
+          "codigo": 11,
           "nombre": "Crema con rosa",
           "fotos": [
             "h27"
@@ -179,6 +191,7 @@
         },
         {
           "id": "blanco-negro-celeste",
+          "codigo": 12,
           "nombre": "Blanco, negro y celeste",
           "fotos": [
             "h26"
@@ -186,6 +199,7 @@
         },
         {
           "id": "blanco-azul",
+          "codigo": 13,
           "nombre": "Blanco con azul marino",
           "fotos": [
             "h28"
@@ -201,6 +215,7 @@
       "colores": [
         {
           "id": "blanco-negro",
+          "codigo": 14,
           "nombre": "Blanco con negro",
           "fotos": [
             "51"
@@ -221,6 +236,7 @@
       "colores": [
         {
           "id": "palo-rosa",
+          "codigo": 15,
           "nombre": "Palo rosa",
           "fotos": [
             "h12"
@@ -240,6 +256,7 @@
       "colores": [
         {
           "id": "palo-rosa",
+          "codigo": 16,
           "nombre": "Palo rosa",
           "fotos": [
             "49"
@@ -259,6 +276,7 @@
       "colores": [
         {
           "id": "blanco-multicolor",
+          "codigo": 17,
           "nombre": "Blanco multicolor",
           "fotos": [
             "46"
@@ -278,6 +296,7 @@
       "colores": [
         {
           "id": "azul-rosa",
+          "codigo": 18,
           "nombre": "Azul marino con rosa",
           "fotos": [
             "52"
@@ -298,6 +317,7 @@
       "colores": [
         {
           "id": "rosa-lila",
+          "codigo": 19,
           "nombre": "Rosa con lila",
           "fotos": [
             "39"
@@ -317,6 +337,7 @@
       "colores": [
         {
           "id": "negro-fucsia",
+          "codigo": 20,
           "nombre": "Negro con fucsia",
           "fotos": [
             "40"
@@ -338,6 +359,7 @@
       "colores": [
         {
           "id": "negro-rosa-lila",
+          "codigo": 21,
           "nombre": "Negro con rosa y lila",
           "fotos": [
             "41"
@@ -357,6 +379,7 @@
       "colores": [
         {
           "id": "blanco-palo-rosa",
+          "codigo": 22,
           "nombre": "Blanco con palo rosa",
           "fotos": [
             "h19"
@@ -377,6 +400,7 @@
       "colores": [
         {
           "id": "crema-menta",
+          "codigo": 23,
           "nombre": "Crema con menta",
           "fotos": [
             "48"
@@ -396,6 +420,7 @@
       "colores": [
         {
           "id": "negro",
+          "codigo": 24,
           "nombre": "Negro",
           "fotos": [
             "h01"
@@ -403,6 +428,7 @@
         },
         {
           "id": "celeste",
+          "codigo": 25,
           "nombre": "Celeste",
           "fotos": [
             "h02"
@@ -418,6 +444,7 @@
       "colores": [
         {
           "id": "negro",
+          "codigo": 26,
           "nombre": "Negro",
           "fotos": [
             "h10"
@@ -439,6 +466,7 @@
       "colores": [
         {
           "id": "blanco",
+          "codigo": 27,
           "nombre": "Blanco",
           "fotos": [
             "h30"
@@ -447,6 +475,7 @@
         },
         {
           "id": "blanco-negro",
+          "codigo": 28,
           "nombre": "Blanco con negro",
           "fotos": [
             "h29"
@@ -463,6 +492,7 @@
       "colores": [
         {
           "id": "blanco-negro",
+          "codigo": 29,
           "nombre": "Blanco con negro",
           "fotos": [
             "h09"
@@ -483,6 +513,7 @@
       "colores": [
         {
           "id": "blanco-gris-rosa",
+          "codigo": 30,
           "nombre": "Blanco con gris y rosa",
           "fotos": [
             "50"

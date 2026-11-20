@@ -76,6 +76,16 @@
     return lista.slice(0, -1).join(', ') + ' y ' + lista[lista.length - 1];
   }
   function nombreModelo(p, c) { return (p.nombreEnMensaje || p.nombre) + ' ' + c.nombre; }
+  // Código corto de cada color (#07): Thalia lo reconoce al instante en el chat.
+  function codigoTexto(c) {
+    var n = Number(c && c.codigo);
+    return n > 0 ? '#' + (n < 10 ? '0' + n : String(n)) : '';
+  }
+  function nombreMensaje(p, c) { var k = codigoTexto(c); return (k ? k + ' ' : '') + nombreModelo(p, c); }
+  function tallaTexto(talla) {
+    if (talla === 'nose') return 'Talla por confirmar';
+    return talla ? 'Talla ' + talla : 'Talla por elegir';
+  }
   function etiquetaDe(p, c) {
     if (estaAgotado(p, c)) return { texto: 'Agotado', clase: 'etiqueta--agotado' };
     if (c.ultimoPar) return { texto: 'Último par', clase: 'etiqueta--aviso' };
@@ -95,7 +105,7 @@
     try { return new URL(rel, location.href).href; } catch (e) { return ''; }
   }
   function mensajeProducto(p, c, talla) {
-    var modelo = nombreModelo(p, c);
+    var modelo = nombreMensaje(p, c);
     var precio = precioDe(p, c);
     var datos = { modelo: modelo, talla: talla, precio: precio ? formatoPrecio(precio) : '' };
     var texto;
@@ -110,7 +120,7 @@
     var lineas = items.map(function (it) {
       var precio = precioDe(it.p, it.c);
       return plantilla(M.lineaDuo, {
-        modelo: nombreModelo(it.p, it.c),
+        modelo: nombreMensaje(it.p, it.c),
         talla: it.talla === 'nose' ? (M.tallaPorConfirmar || 'por confirmar') : it.talla,
         precio: precio ? formatoPrecio(precio) : (M.precioPorConfirmar || 'precio por confirmar')
       });
@@ -132,51 +142,295 @@
       return navigator.canShare({ files: [new File(['x'], 'prueba.jpg', { type: 'image/jpeg' })] });
     } catch (e) { return false; }
   })();
-  var archivos = {};
-  function aJpeg(blob) {
-    return new Promise(function (resolver, fallar) {
-      var url = URL.createObjectURL(blob);
-      var img = new Image();
-      img.onload = function () {
-        var lienzo = document.createElement('canvas');
-        lienzo.width = img.naturalWidth;
-        lienzo.height = img.naturalHeight;
-        lienzo.getContext('2d').drawImage(img, 0, 0);
-        URL.revokeObjectURL(url);
-        lienzo.toBlob(function (b) { if (b) resolver(b); else fallar(new Error('canvas')); }, 'image/jpeg', 0.86);
-      };
-      img.onerror = function () { URL.revokeObjectURL(url); fallar(new Error('foto')); };
-      img.src = url;
+  // ------------------------------------------------------------------ tarjeta de pedido (una sola imagen)
+  // Una imagen JPEG 1080×1350 con el logo, la foto (o las 2 del dúo) y, en letra grande,
+  // código, modelo, color, talla y precio. Es lo que Thalia ve primero en el chat.
+  var PEDIDO_ANCHO = 1080, PEDIDO_ALTO = 1350;
+  var ROJO_LIQUIDACION = '#C8102E';
+
+  function varCss(nombre, defecto) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
+    return v || defecto;
+  }
+  function cargarImagen(src) {
+    return new Promise(function (ok, mal) {
+      var im = new Image();
+      im.onload = function () { ok(im); };
+      im.onerror = function () { mal(new Error('No cargó ' + src)); };
+      im.src = src;
     });
   }
-  // Prepara la foto como JPEG: usa la versión JPEG ya generada y, si falla, convierte el WebP con canvas.
-  function archivoDe(p, c) {
-    var id = c.fotos[0];
-    var k = claveDe(p, c);
-    if (!archivos[k]) {
-      archivos[k] = fetch(fotoJpg(id))
-        .then(function (r) { if (!r.ok) throw new Error('jpg'); return r.blob(); })
-        .catch(function () { return fetch(foto('grande', id)).then(function (r) { return r.blob(); }).then(aJpeg); })
-        .then(function (blob) { return new File([blob], 'thalia-import-' + p.id + '-' + c.id + '.jpg', { type: 'image/jpeg' }); });
-      archivos[k].catch(function () { delete archivos[k]; });
-    }
-    return archivos[k];
+  // Foto cuadrada ya recortada (og/ JPEG); si falta, la grande.
+  function fotoPedido(id) {
+    return cargarImagen(fotoJpg(id)).catch(function () { return cargarImagen(foto('grande', id)); });
   }
-  function prepararBotonFotos(boton, pares) {
-    if (!boton) return;
-    boton.hidden = !soportaFotos || !pares.length;
-    if (boton.hidden) return;
-    boton.disabled = true;
-    boton.setAttribute('aria-busy', 'true');
+  function esperarFuentes(familias) {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    var cargas = Promise.all(familias.map(function (f) { return document.fonts.load(f).catch(function () {}); }))
+      .then(function () { return document.fonts.ready; });
+    var tope = new Promise(function (r) { setTimeout(r, 3000); });
+    return Promise.race([cargas, tope]);
+  }
+  function rectRedondo(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+  function fotoRecortada(g, im, x, y, lado, radio) {
+    var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+    var s = Math.min(w, h);
+    g.save();
+    g.shadowColor = 'rgba(0, 0, 0, 0.16)';
+    g.shadowBlur = 40;
+    g.shadowOffsetY = 14;
+    rectRedondo(g, x, y, lado, lado, radio);
+    g.fillStyle = '#FFFFFF';
+    g.fill();
+    g.restore();
+    g.save();
+    rectRedondo(g, x, y, lado, lado, radio);
+    g.clip();
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(im, (w - s) / 2, (h - s) / 2, s, s, x, y, lado, lado);
+    g.restore();
+  }
+  // Escribe un texto centrado que entra en "ancho": achica la letra y, si hace falta, usa 2 líneas.
+  function textoAjustado(g, texto, cx, y, ancho, fuente, tam, min, maxLineas) {
+    var t = tam;
+    function medir(s) { g.font = fuente(t); return g.measureText(s).width; }
+    while (t > min && medir(texto) > ancho) t -= 2;
+    var lineas = [texto];
+    if (medir(texto) > ancho && maxLineas > 1) {
+      t = tam;
+      var palabras = texto.split(' ');
+      while (t >= min) {
+        lineas = [];
+        var linea = '';
+        palabras.forEach(function (p) {
+          var prueba = linea ? linea + ' ' + p : p;
+          if (medir(prueba) > ancho && linea) { lineas.push(linea); linea = p; } else linea = prueba;
+        });
+        lineas.push(linea);
+        if (lineas.length <= maxLineas && lineas.every(function (l) { return medir(l) <= ancho; })) break;
+        t -= 2;
+      }
+    }
+    g.font = fuente(t);
+    g.textAlign = 'center';
+    g.textBaseline = 'alphabetic';
+    var alto = Math.round(t * 1.12);
+    lineas.slice(0, maxLineas).forEach(function (l, i) { g.fillText(l, cx, y + i * alto); });
+    return y + (Math.min(lineas.length, maxLineas) - 1) * alto;
+  }
+  function pastilla(g, texto, cx, y, fuente, fondo, tinta, altoP, padX) {
+    g.font = fuente;
+    var w = g.measureText(texto).width + padX * 2;
+    rectRedondo(g, cx - w / 2, y, w, altoP, altoP / 2);
+    g.fillStyle = fondo;
+    g.fill();
+    g.fillStyle = tinta;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText(texto, cx, y + altoP / 2 + 2);
+    g.textBaseline = 'alphabetic';
+    return w;
+  }
+  function cintaLiquidacion(g, x, y, escala) {
+    var f = '800 ' + Math.round(30 * escala) + 'px ' + varCss('--fuente-texto', 'sans-serif');
+    g.font = f;
+    var w = g.measureText('LIQUIDACIÓN').width + 44 * escala, h = 58 * escala;
+    g.save();
+    g.shadowColor = 'rgba(0, 0, 0, 0.25)';
+    g.shadowBlur = 16;
+    rectRedondo(g, x, y, w, h, 14 * escala);
+    g.fillStyle = ROJO_LIQUIDACION;
+    g.fill();
+    g.restore();
+    g.fillStyle = '#FFFFFF';
+    g.textAlign = 'left';
+    g.textBaseline = 'middle';
+    g.fillText('LIQUIDACIÓN', x + 22 * escala, y + h / 2 + 2);
+    g.textBaseline = 'alphabetic';
+  }
+
+  // Datos de un par en la imagen: pastilla con el código, modelo, color, talla y precio.
+  // apilar = talla y precio uno debajo del otro (dúo). Devuelve dónde terminó.
+  function datosPar(g, it, cx, y, ancho, escala, colores, fuentes, apilar) {
+    var p = it.p, c = it.c;
+    var precio = precioDe(p, c);
+    var liq = !!c.liquidacion;
+    var k = codigoTexto(c);
+    if (k) {
+      pastilla(g, k, cx, y, '700 ' + Math.round(40 * escala) + 'px ' + fuentes.texto, colores.cta, colores.ctaTinta, Math.round(64 * escala), 26 * escala);
+      y += Math.round(64 * escala) + Math.round(66 * escala);
+    } else {
+      y += Math.round(50 * escala);
+    }
+    g.fillStyle = colores.tinta;
+    y = textoAjustado(g, p.nombre, cx, y, ancho, function (t) { return fuentes.pesoTitulos + ' ' + t + 'px ' + fuentes.titulos; },
+      Math.round(70 * escala), Math.round(40 * escala), apilar ? 2 : 1);
+    y += Math.round(54 * escala);
+    g.fillStyle = colores.tintaSuave;
+    y = textoAjustado(g, c.nombre, cx, y, ancho, function (t) { return '500 ' + t + 'px ' + fuentes.texto; }, Math.round(40 * escala), Math.round(28 * escala), 1);
+    y += Math.round(30 * escala);
+    // Talla (pastilla suave) y precio
+    var talla = tallaTexto(it.talla);
+    var precioTxt = precio ? formatoPrecio(precio) : 'Consultar precio';
+    var fTalla = '700 ' + Math.round(42 * escala) + 'px ' + fuentes.texto;
+    var fPrecio = (precio ? '800 ' + Math.round(54 * escala) : '700 ' + Math.round(38 * escala)) + 'px ' + fuentes.texto;
+    var altoP = Math.round(76 * escala);
+    g.font = fTalla;
+    var wT = g.measureText(talla).width + 56;
+    g.font = fPrecio;
+    var wP = g.measureText(precioTxt).width;
+    if (!apilar && wT + 32 + wP <= ancho) {
+      // En una sola fila: [Talla 38]  S/ 39.90
+      var x0 = cx - (wT + 32 + wP) / 2;
+      pastilla(g, talla, x0 + wT / 2, y, fTalla, colores.tonal, colores.tonalTinta, altoP, 28);
+      g.font = fPrecio;
+      g.fillStyle = liq ? ROJO_LIQUIDACION : (precio ? colores.acento : colores.tintaSuave);
+      g.textAlign = 'left';
+      g.textBaseline = 'middle';
+      g.fillText(precioTxt, x0 + wT + 32, y + altoP / 2 + 3);
+      g.textBaseline = 'alphabetic';
+      return y + altoP;
+    }
+    pastilla(g, talla, cx, y, fTalla, colores.tonal, colores.tonalTinta, altoP, 24 * escala);
+    y += altoP + Math.round(64 * escala);
+    g.font = fPrecio;
+    g.fillStyle = liq ? ROJO_LIQUIDACION : (precio ? colores.acento : colores.tintaSuave);
+    g.textAlign = 'center';
+    g.fillText(precioTxt, cx, y);
+    return y;
+  }
+
+  function dibujarPedido(items) {
+    var tema = temaActual();
+    var colores = {
+      fondo: varCss('--fondo', '#FBF4EF'), superficie: varCss('--superficie', '#FFFFFF'),
+      tinta: varCss('--tinta', '#3B2230'), tintaSuave: varCss('--tinta-suave', '#6E5562'),
+      acento: varCss('--acento-tinta', '#96506A'), cta: varCss('--cta', '#3B2230'), ctaTinta: varCss('--cta-tinta', '#FBF4EF'),
+      tonal: varCss('--tonal', '#F3DCE2'), tonalTinta: varCss('--tonal-tinta', '#3B2230'), rosa: varCss('--acento-2', '#E4A5B5')
+    };
+    var fuentes = {
+      titulos: varCss('--fuente-titulos', 'Georgia, serif'), texto: varCss('--fuente-texto', 'sans-serif'),
+      pesoTitulos: varCss('--peso-titulos', '700')
+    };
+    var ratio = parseFloat(varCss('--logo-ratio', '3.9')) || 3.9;
+    return Promise.all([
+      esperarFuentes([fuentes.pesoTitulos + ' 60px ' + fuentes.titulos, '500 40px ' + fuentes.texto, '700 40px ' + fuentes.texto, '800 40px ' + fuentes.texto]),
+      cargarImagen('img/logo/logo-' + tema + '.svg').catch(function () { return null; }),
+      Promise.all(items.map(function (it) { return fotoPedido(it.c.fotos[0]); }))
+    ]).then(function (r) {
+      var logo = r[1], fotos = r[2];
+      var lienzo = document.createElement('canvas');
+      lienzo.width = PEDIDO_ANCHO;
+      lienzo.height = PEDIDO_ALTO;
+      var g = lienzo.getContext('2d');
+      var W = PEDIDO_ANCHO, H = PEDIDO_ALTO, duo = items.length > 1;
+      // Fondo con un arco suave del color del tema
+      g.fillStyle = colores.fondo;
+      g.fillRect(0, 0, W, H);
+      g.fillStyle = colores.tonal;
+      g.globalAlpha = 0.7;
+      g.beginPath();
+      g.ellipse(W / 2, -260, W * 0.95, 560, 0, 0, Math.PI * 2);
+      g.fill();
+      g.globalAlpha = 1;
+      // Logo
+      var altoLogo = duo ? 92 : 96;
+      if (logo) g.drawImage(logo, (W - altoLogo * ratio) / 2, 44, altoLogo * ratio, altoLogo);
+      // Rótulo
+      g.fillStyle = colores.acento;
+      g.font = '700 30px ' + fuentes.texto;
+      g.textAlign = 'center';
+      if ('letterSpacing' in g) g.letterSpacing = '6px';
+      g.fillText(duo ? 'MI DÚO' : 'MI PEDIDO', W / 2, 186);
+      if ('letterSpacing' in g) g.letterSpacing = '0px';
+
+      if (!duo) {
+        var lado = 740, x = (W - lado) / 2, y = 214;
+        fotoRecortada(g, fotos[0], x, y, lado, 40);
+        if (items[0].c.liquidacion) cintaLiquidacion(g, x + 26, y + 26, 1);
+        datosPar(g, items[0], W / 2, y + lado - 32, W - 120, 1, colores, fuentes, false);
+      } else {
+        var ladoD = 480, gap = 40, x0 = (W - ladoD * 2 - gap) / 2, esc = 0.95;
+        // Se mide el alto del texto en un lienzo aparte para centrar todo entre el rótulo y el pie.
+        var prueba = document.createElement('canvas').getContext('2d');
+        var altoTexto = Math.max.apply(null, items.map(function (it) {
+          return datosPar(prueba, it, 0, 0, ladoD - 10, esc, colores, fuentes, true);
+        }));
+        var yD = Math.round(214 + Math.max(0, (H - 110 - 214) - (ladoD - 30 + altoTexto)) / 2);
+        var fin = 0;
+        items.forEach(function (it, i) {
+          var xi = x0 + i * (ladoD + gap);
+          fotoRecortada(g, fotos[i], xi, yD, ladoD, 32);
+          if (it.c.liquidacion) cintaLiquidacion(g, xi + 18, yD + 18, 0.85);
+          fin = Math.max(fin, datosPar(g, it, xi + ladoD / 2, yD + ladoD - 30, ladoD - 10, esc, colores, fuentes, true));
+        });
+        // Línea separadora entre los dos pares
+        g.strokeStyle = colores.tonal;
+        g.lineWidth = 3;
+        g.beginPath();
+        g.moveTo(W / 2, yD + ladoD + 60);
+        g.lineTo(W / 2, fin);
+        g.stroke();
+      }
+      // Pie
+      g.fillStyle = colores.tintaSuave;
+      g.font = '500 28px ' + fuentes.texto;
+      g.textAlign = 'center';
+      g.fillText('Pedido desde la tienda web · Thalia Import', W / 2, H - 46);
+      return new Promise(function (ok, mal) {
+        lienzo.toBlob(function (b) { if (b) ok(b); else mal(new Error('canvas')); }, 'image/jpeg', 0.9);
+      });
+    });
+  }
+
+  var pedidos = {};
+  function imagenPedido(items) {
+    var firma = temaActual() + '|' + items.map(function (it) { return claveDe(it.p, it.c) + ':' + (it.talla || ''); }).join('+');
+    if (!pedidos[firma]) {
+      pedidos[firma] = dibujarPedido(items).then(function (blob) {
+        var nombre = 'pedido-thalia-import-' + items.map(function (it) { return codigoTexto(it.c).replace('#', '') || it.c.id; }).join('-') + '.jpg';
+        return new File([blob], nombre, { type: 'image/jpeg' });
+      });
+      pedidos[firma].catch(function () { delete pedidos[firma]; });
+    }
+    return pedidos[firma];
+  }
+  window.__imagenPedido = imagenPedido;   // para las pruebas automáticas
+
+  // Botón principal "Enviar pedido con foto" (celular) o, si no se puede, el enlace de WhatsApp de siempre.
+  function modoEnvio(botonFotos, nota, cta, textoNormal, conFoto) {
+    botonFotos.hidden = !conFoto;
+    if (nota) nota.hidden = !conFoto;
+    cta.classList.toggle('boton--primario', !conFoto);
+    cta.classList.toggle('boton--solo-texto', conFoto);
+    var t = $('[data-texto-cta]', cta);
+    if (t) t.innerHTML = conFoto ? 'Enviar solo texto' : textoNormal;
+  }
+  // Prepara la imagen antes del toque (compartir debe ocurrir en el mismo toque).
+  function prepararBotonFotos(boton, items, alFallar) {
+    if (!boton || boton.hidden) return;
     var marca = String(Date.now() + Math.random());
     boton.setAttribute('data-preparando', marca);
-    Promise.all(pares.map(function (it) { return archivoDe(it.p, it.c); })).then(function (lista) {
+    boton._archivos = null;
+    if (!items.length) { boton.disabled = false; boton.removeAttribute('aria-busy'); return; }
+    boton.disabled = true;
+    boton.setAttribute('aria-busy', 'true');
+    imagenPedido(items).then(function (archivo) {
       if (boton.getAttribute('data-preparando') !== marca) return;
-      boton._archivos = lista;
+      boton._archivos = [archivo];
       boton.disabled = false;
       boton.removeAttribute('aria-busy');
-    }).catch(function () {
-      if (boton.getAttribute('data-preparando') === marca) boton.hidden = true;
+    }).catch(function (e) {
+      if (window.console) console.warn('No se pudo armar la imagen del pedido:', e);
+      if (boton.getAttribute('data-preparando') === marca && alFallar) alFallar();
     });
   }
   function compartirConFotos(boton, texto, avisar) {
@@ -186,10 +440,10 @@
       if (navigator.canShare && !navigator.canShare(datos)) datos = { files: lista };
       navigator.share(datos).catch(function (err) {
         if (err && err.name === 'AbortError') return;
-        avisar('No se pudieron enviar las fotos. Usa «Pedir por WhatsApp», reina 💕');
+        avisar('No se pudo enviar la foto. Usa «Enviar solo texto», reina 💕');
       });
     } catch (e) {
-      avisar('No se pudieron enviar las fotos. Usa «Pedir por WhatsApp», reina 💕');
+      avisar('No se pudo enviar la foto. Usa «Enviar solo texto», reina 💕');
     }
   }
 
@@ -284,10 +538,10 @@
     var pedir;
     if (agotada) {
       pedir = '<a class="tarjeta__pedir" href="' + esc(urlWhatsApp(mensajeProducto(p, c))) + '" target="_blank" rel="noopener">Avísame cuando llegue<span class="oculto">: ' + esc(nombreCompleto) + '</span></a>';
-    } else if (unica && !tallaAgotada(c, unica)) {
+    } else if (unica && !tallaAgotada(c, unica) && !soportaFotos) {
       pedir = '<a class="tarjeta__pedir" href="' + esc(urlWhatsApp(mensajeProducto(p, c, String(unica)))) + '" target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg>Pedir por WhatsApp<span class="oculto">: ' + esc(nombreCompleto) + ', talla ' + unica + '</span></a>';
     } else {
-      pedir = '<button type="button" class="tarjeta__pedir" data-producto="' + esc(p.id) + '" data-color="' + esc(c.id) + '"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg>Pedir por WhatsApp<span class="oculto">: ' + esc(nombreCompleto) + ' (elige tu talla)</span></button>';
+      pedir = '<button type="button" class="tarjeta__pedir" data-producto="' + esc(p.id) + '" data-color="' + esc(c.id) + '"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg>Pedir por WhatsApp<span class="oculto">: ' + esc(nombreCompleto) + (unica ? ', talla ' + unica : ' (elige tu talla)') + '</span></button>';
     }
     return '<li class="tarjeta' + (agotada ? ' tarjeta--agotada' : '') + '" data-clave="' + esc(k) + '">' +
       '<div class="tarjeta__foto">' +
@@ -301,7 +555,7 @@
       '<div class="tarjeta__cuerpo">' +
         '<div class="tarjeta__datos">' +
           '<h3 class="tarjeta__nombre"><button type="button" class="tarjeta__ver" data-producto="' + esc(p.id) + '" data-color="' + esc(c.id) + '">' + esc(p.nombre) + '<span class="oculto">, ' + esc(c.nombre) + '. Ver fotos y detalles</span></button></h3>' +
-          '<p class="tarjeta__color">' + esc(c.nombre) + '</p>' +
+          '<p class="tarjeta__color">' + esc(c.nombre) + (codigoTexto(c) ? ' <span class="tarjeta__codigo" title="Código del modelo">' + codigoTexto(c) + '</span>' : '') + '</p>' +
           '<p class="tarjeta__precio' + (precio ? '' : ' tarjeta__precio--consultar') + (c.liquidacion && !agotada ? ' tarjeta__precio--liquidacion' : '') + '">' + (precio ? esc(formatoPrecio(precio)) : 'Consultar precio') + '</p>' +
           lineaTallas +
         '</div>' +
@@ -460,6 +714,9 @@
     var precio = precioDe(p, c);
     var etiqueta = etiquetaDe(p, c);
     $('#ficha-titulo').textContent = p.nombre;
+    var codigo = codigoTexto(c);
+    $('#ficha-codigo').textContent = codigo ? 'Código ' + codigo : '';
+    $('#ficha-codigo').hidden = !codigo;
     $('#ficha-desc').textContent = p.descripcion || '';
     var precioEl = $('#ficha-precio');
     precioEl.textContent = precio ? formatoPrecio(precio) : 'Consultar precio';
@@ -472,7 +729,6 @@
     ocultarAviso('#ficha-aviso');
     actualizarCta();
     actualizarBotonDuoFicha();
-    prepararBotonFotos($('#ficha-fotos'), estaAgotado(p, c) ? [] : [{ p: p, c: c }]);
   }
 
   function opcionColorHtml(nombreGrupo, p, c, marcado) {
@@ -550,7 +806,11 @@
     var p = ficha.p, c = ficha.c;
     var cta = $('#ficha-cta');
     var agot = estaAgotado(p, c);
-    $('#ficha-cta-texto').textContent = agot ? 'Avísame cuando llegue' : 'Pedir por WhatsApp';
+    var conFoto = soportaFotos && !agot;
+    var textoNormal = agot ? 'Avísame cuando llegue' : 'Pedir por WhatsApp';
+    var volverATexto = function () { modoEnvio($('#ficha-fotos'), $('#ficha-fotos-nota'), cta, textoNormal, false); };
+    modoEnvio($('#ficha-fotos'), $('#ficha-fotos-nota'), cta, textoNormal, conFoto);
+    if (conFoto) prepararBotonFotos($('#ficha-fotos'), [{ p: p, c: c, talla: ficha.talla }], volverATexto);
     $('#ficha-duo').hidden = agot;
     if (agot || ficha.talla) {
       cta.href = urlWhatsApp(mensajeProducto(p, c, ficha.talla));
@@ -699,6 +959,7 @@
     var p = x.p, c = x.c;
     var nombre = nombreModelo(p, c);
     var unica = tallaUnica(p, c);
+    var precio = precioDe(p, c);
     var talla = unica
       ? '<span class="par-duo__talla">Talla ' + unica + '</span>'
       : '<label class="par-duo__talla par-duo__talla--elegir"><span class="oculto">Talla para ' + esc(nombre) + '</span>' +
@@ -710,9 +971,15 @@
             '<option value="nose"' + (it.talla === 'nose' ? ' selected' : '') + '>No sé</option>' +
           '</select></label>';
     return '<div class="par-duo' + (it.talla ? '' : ' par-duo--falta') + '">' +
-      '<span class="par-duo__foto"><img src="' + foto('mini', c.fotos[0]) + '" alt="" width="160" height="160"></span>' +
+      '<span class="par-duo__foto"><img src="' + foto('tarjeta', c.fotos[0]) + '" alt="" width="600" height="600"></span>' +
       '<button type="button" class="par-duo__quitar" data-quitar="' + i + '" aria-label="Quitar ' + esc(nombre) + ' de mi dúo"><svg class="icono" aria-hidden="true"><use href="#i-cerrar"/></svg></button>' +
-      '<span class="par-duo__info"><span class="par-duo__nombre">' + esc(nombre) + '</span>' + talla + '</span>' +
+      '<span class="par-duo__info">' +
+        (codigoTexto(c) ? '<span class="par-duo__codigo">' + codigoTexto(c) + '</span>' : '') +
+        '<span class="par-duo__nombre">' + esc(p.nombre) + '</span>' +
+        '<span class="par-duo__color">' + esc(c.nombre) + '</span>' +
+        '<span class="par-duo__precio' + (c.liquidacion ? ' par-duo__precio--liquidacion' : '') + '">' + (precio ? esc(formatoPrecio(precio)) : 'Consultar precio') + '</span>' +
+        talla +
+      '</span>' +
     '</div>';
   }
 
@@ -726,7 +993,7 @@
       barra.hidden = false;
       document.documentElement.classList.add('con-duo');
       lista.innerHTML = duo.map(parHtml).join('') +
-        (duo.length < 2 ? '<div class="par-duo par-duo--vacio" aria-hidden="true"><span class="par-duo__foto"><svg class="icono"><use href="#i-mas"/></svg></span><span class="par-duo__info"><span class="par-duo__talla">Otro par</span></span></div>' : '');
+        (duo.length < 2 ? '<div class="par-duo par-duo--vacio" aria-hidden="true"><span class="par-duo__foto"><svg class="icono"><use href="#i-mas"/></svg></span><span class="par-duo__info"><span class="par-duo__nombre">Elige otro par 👟</span><span class="par-duo__talla">Toca «+ Dúo» en otro modelo</span></span></div>' : '');
     }
     actualizarCtaDuo();
     marcarTarjetas();
@@ -739,7 +1006,14 @@
     var listo = duo.length === 2 && duo.every(function (it) { return it.talla; });
     cta.href = listo ? urlWhatsApp(mensajeDuo(itemsDuo())) : '#';
     cta.classList.toggle('boton--esperando', !listo);
-    prepararBotonFotos($('#duo-fotos'), duo.length === 2 ? itemsDuo() : []);
+    var textoNormal = 'Pedir mi dúo<span class="solo-ancho"> por WhatsApp</span>';
+    var conFoto = soportaFotos && duo.length > 0;
+    modoEnvio($('#duo-fotos'), $('#duo-fotos-nota'), cta, textoNormal, conFoto);
+    if (conFoto) prepararBotonFotos($('#duo-fotos'), duo.length === 2 ? itemsDuo() : [], function () {
+      modoEnvio($('#duo-fotos'), $('#duo-fotos-nota'), cta, textoNormal, false);
+      medirBarra();
+    });
+    medirBarra();
   }
 
   function faltaEnDuo() {
