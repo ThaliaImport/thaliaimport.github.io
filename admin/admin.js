@@ -574,7 +574,10 @@
         base = { commit: nuevo.commit, arbol: nuevo.arbol, archivos: archivos, catalogo: res.catalogo };
         return res;
       } catch (e) {
-        if (e.tipo === 'conflicto' && intento < 3) continue;   // la rama se movió: se vuelve a aplicar sobre lo último
+        if (e.tipo === 'conflicto' && intento < 3) {           // la rama se movió: se vuelve a aplicar sobre lo último
+          await new Promise(r => setTimeout(r, 1200 * (intento + 1)));
+          continue;
+        }
         throw e;
       }
     }
