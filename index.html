@@ -84,6 +84,8 @@
     <symbol id="i-celular" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3M9.3 11.4l1.9 1.9 3.6-3.8"/></g></symbol>
     <symbol id="i-caja" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 7.5L12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5L12 12l8.5-4.5M12 12v9M7.8 5.2l8.5 4.6"/></g></symbol>
     <symbol id="i-regla" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2.5" y="7.5" width="19" height="9" rx="1.5"/><path d="M6.5 7.5v3M10 7.5v4.5M13.5 7.5v3M17 7.5v4.5"/></g></symbol>
+    <symbol id="i-casa" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" d="M3.5 10.5L12 3.8l8.5 6.7M5.8 9v10.2a1 1 0 0 0 1 1h3.4v-5.6h3.6v5.6h3.4a1 1 0 0 0 1-1V9"/></symbol>
+    <symbol id="i-pie" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 16.6V14c0-.9.6-1.6 1.5-1.8l3.4-.8 2.4-3.6c.3-.4.7-.6 1.2-.5l1.2.2.9 3.4 4.5 1.6c1.6.6 2.4 1.7 2.4 3.3v.8z"/><path d="M2.5 16.6h17.9V18c0 .6-.4 1-1 1H3.5c-.6 0-1-.4-1-1z"/><path d="M9.7 11.5l1.7.6M8.7 12.9l1.7.6"/></g></symbol>
     <symbol id="i-duo" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M2.5 15.5c0-2 1.2-3.2 3-3.6l2.2-.5 1.6-2.4h1.4l.8 3.2 3 1.1c1 .4 1.5 1.1 1.5 2.2v1H2.5z"/><path d="M9.5 9.2l2-3.2h1.4l.8 3.2 3 1.1c1 .4 1.5 1.1 1.5 2.2v1h3.3v-1c0-1.1-.5-1.8-1.5-2.2l-3-1.1"/></g></symbol>
   </svg>
 
@@ -136,10 +138,27 @@
       </div>
     </section>
 
-    <!-- Menú de secciones (se queda pegado arriba al bajar) -->
-    <nav class="menu-secciones" aria-label="Secciones del catálogo">
+    <!-- Carrusel de liquidación: se llena solo con los colores que tienen "liquidacion": true -->
+    <section class="liquidacion" id="liquidacion" aria-labelledby="liquidacion-titulo" hidden>
       <div class="contenedor">
-        <ul class="menu-secciones__lista" id="menu-secciones"></ul>
+        <header class="liquidacion__cabecera">
+          <div>
+            <p class="liquidacion__antetitulo">Últimos pares</p>
+            <h2 class="liquidacion__titulo" id="liquidacion-titulo">Liquidación</h2>
+          </div>
+          <div class="liquidacion__flechas">
+            <button type="button" class="flecha-redonda" data-liq="-1" aria-label="Ver anteriores" aria-controls="liquidacion-pista"><svg class="icono" aria-hidden="true"><use href="#i-izq"/></svg></button>
+            <button type="button" class="flecha-redonda" data-liq="1" aria-label="Ver siguientes" aria-controls="liquidacion-pista"><svg class="icono" aria-hidden="true"><use href="#i-der"/></svg></button>
+          </div>
+        </header>
+        <ul class="liquidacion__pista" id="liquidacion-pista"></ul>
+      </div>
+    </section>
+
+    <!-- Filtros rápidos (se quedan pegados arriba al bajar) -->
+    <nav class="filtros" id="filtros" aria-label="Filtros del catálogo">
+      <div class="contenedor">
+        <div class="filtros__lista" id="filtros-lista"></div>
       </div>
     </nav>
 
@@ -153,6 +172,20 @@
             <p class="como-duo__texto">Toca <strong>+ Dúo</strong> en dos modelos que te gusten, elige tus tallas en la barrita de abajo y pídelo por WhatsApp. ¿Hay precio especial por 2? ¡Pregúntanos!</p>
           </div>
         </div>
+        <section class="mi-talla" id="mi-talla" aria-labelledby="mi-talla-titulo" hidden>
+          <div class="mi-talla__cabecera">
+            <span class="mi-talla__icono" aria-hidden="true"><svg class="icono"><use href="#i-pie"/></svg></span>
+            <div>
+              <h2 class="mi-talla__titulo" id="mi-talla-titulo">Mi talla</h2>
+              <p class="mi-talla__bajada">Elige tu talla y te mostramos solo lo que hay para ti.</p>
+            </div>
+          </div>
+          <div class="mi-talla__chips" id="mi-talla-chips" role="group" aria-labelledby="mi-talla-titulo"></div>
+          <div class="resultado">
+            <p class="resultado__cuenta" id="resultado-cuenta" aria-live="polite" aria-atomic="true"></p>
+            <button type="button" class="resultado__quitar" id="quitar-filtros" hidden><svg class="icono" aria-hidden="true"><use href="#i-cerrar"/></svg>Quitar filtros</button>
+          </div>
+        </section>
       </div>
       <noscript>
         <div class="contenedor aviso-noscript">
@@ -388,7 +421,10 @@
   <section class="barra-duo" id="barra-duo" aria-label="Tu dúo" hidden>
     <div class="barra-duo__caja">
       <div class="barra-duo__pares">
-        <p class="barra-duo__titulo">Tu dúo</p>
+        <div class="barra-duo__cabeza">
+          <p class="barra-duo__titulo" id="barra-duo-titulo" tabindex="-1">Tu dúo</p>
+          <button type="button" class="barra-duo__ocultar" id="duo-ocultar" aria-controls="barra-duo"><span>Ocultar</span><svg class="icono" aria-hidden="true"><use href="#i-abajo"/></svg></button>
+        </div>
         <div class="barra-duo__lista" id="barra-duo-pares"></div>
       </div>
       <div class="barra-duo__acciones">
@@ -399,6 +435,15 @@
     </div>
     <p class="barra-duo__aviso" id="duo-aviso" role="status" aria-live="polite"></p>
   </section>
+
+  <!-- Barra de abajo tipo app (solo en celular) -->
+  <nav class="barra-app" id="barra-app" aria-label="Accesos rápidos">
+    <a class="barra-app__item" href="#inicio" data-app="inicio"><svg class="icono" aria-hidden="true"><use href="#i-casa"/></svg><span>Inicio</span></a>
+    <a class="barra-app__item" href="#mi-talla" data-app="talla"><svg class="icono" aria-hidden="true"><use href="#i-pie"/></svg><span class="barra-app__texto" id="app-talla-texto">Mi talla</span></a>
+    <button type="button" class="barra-app__item" data-app="duo" aria-controls="barra-duo"><svg class="icono" aria-hidden="true"><use href="#i-duo"/></svg><span>Mi dúo</span><span class="barra-app__insignia" id="app-duo-cuenta" hidden>0</span><span class="oculto" id="app-duo-oculto">: sin pares todavía</span></button>
+    <a class="barra-app__item barra-app__item--wa" data-wa="general" href="https://wa.me/51900915638?text=Hola%20Thalia%20Import%20%F0%9F%92%95%20Vi%20tu%20cat%C3%A1logo%20web%20y%20quiero%20hacerte%20una%20consulta%2C%20preciosa." target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg><span>WhatsApp</span></a>
+  </nav>
+  <p class="aviso-app" id="aviso-app" role="status" aria-live="polite"></p>
 
   <!-- Ficha del producto -->
   <dialog class="hoja" id="ficha" aria-labelledby="ficha-titulo">

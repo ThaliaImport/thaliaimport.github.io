@@ -52,6 +52,8 @@ window.AJUSTES = {
     sinTalla: "Hola Thalia Import 💕 Me interesa el modelo *{modelo}* ({precio}), pero aún no sé mi talla. ¿Me ayudas a elegirla, preciosa?",
     sinTallaSinPrecio: "Hola Thalia Import 💕 Me interesa el modelo *{modelo}*, pero aún no sé mi talla. ¿Me ayudas a elegirla? ¿Y cuál es el precio, preciosa?",
     agotado: "Hola Thalia Import 💕 Vi que el modelo *{modelo}* está agotado. ¿Me avisas cuando vuelva a llegar, porfa?",
+    // Cuando "Mi talla" no encuentra nada en el catálogo.
+    tallaBuscada: "Hola Thalia Import 💕 Busco zapatillas en talla *{talla}*. ¿Me avisas cuando lleguen, preciosa?",
     enlace: "Foto: {enlace}",
 
     duo: "Hola Thalia Import 💕 Quiero armar un dúo:\n{pares}\n¿Hay precio especial por llevar 2, preciosa?",

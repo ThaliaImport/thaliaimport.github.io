@@ -13,7 +13,11 @@
   var PRODUCTOS = null;  // se llena con productos.json
   var RUTA_FOTOS = 'img/fotos/';
   var TALLAS_BASE = [35, 36, 37, 38, 39];
+  var TALLAS_FILTRO = [34, 35, 36, 37, 38, 39, 40, 41];   // chips de "Mi talla"
   var TEMAS = ['a', 'b', 'c'];
+  var MOVIMIENTO = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+  // Con "reducir movimiento" no hay vuelos, escalonados ni crecimientos: todo aparece directo.
+  function sinMovimiento() { return !!(MOVIMIENTO && MOVIMIENTO.matches); }
 
   // ------------------------------------------------------------------ utilidades
   function $(sel, ctx) { return (ctx || document).querySelector(sel); }
@@ -521,19 +525,280 @@
     });
   }
 
+  // Línea de tallas de la tarjeta. Con "Mi talla" elegida: la talla va resaltada, o "Talla 37 · consulta".
+  function lineaTallasHtml(p, c, talla) {
+    if (estaAgotado(p, c)) return '';
+    var tallas = tallasDe(p, c);
+    if (!tallas) {
+      return talla
+        ? '<p class="tarjeta__tallas tarjeta__tallas--consulta">Talla ' + esc(talla) + ' · <span>consulta</span></p>'
+        : '<p class="tarjeta__tallas">Consulta tallas</p>';
+    }
+    if (tallas.length === 1) return '';
+    var partes = tallas.map(function (t) { return String(t) === String(talla) ? '<strong>' + t + '</strong>' : String(t); });
+    return '<p class="tarjeta__tallas">Tallas ' + listaTexto(partes) + '</p>';
+  }
+
+  // ------------------------------------------------------------------ filtros (Mi talla + rápidos)
+  var filtro = { talla: null, liquidacion: false, conPrecio: false, secciones: [] };
+
+  function hayEnTalla(p, c, t) {
+    if (estaAgotado(p, c)) return false;
+    var tallas = tallasDe(p, c);
+    if (!tallas) return true;   // "Consulta tallas": se muestra, con la nota "consulta"
+    return tallas.indexOf(Number(t)) !== -1 && !tallaAgotada(c, t);
+  }
+  function pasaFiltro(p, c) {
+    if (filtro.secciones.length && filtro.secciones.indexOf(p.seccion) === -1) return false;
+    if (filtro.liquidacion && !(c.liquidacion && !estaAgotado(p, c))) return false;
+    if (filtro.conPrecio && !precioDe(p, c)) return false;
+    if (filtro.talla && !hayEnTalla(p, c, filtro.talla)) return false;
+    return true;
+  }
+  function hayFiltros() { return !!(filtro.talla || filtro.liquidacion || filtro.conPrecio || filtro.secciones.length); }
+
+  function pintarFiltros() {
+    var lista = $('#filtros-lista');
+    if (!lista) return;
+    var secciones = seccionesConProductos().map(function (s) {
+      return '<button type="button" class="chip" data-filtro="seccion" data-valor="' + esc(s.id) + '" aria-pressed="false">' + esc(s.titulo) + '</button>';
+    }).join('');
+    var hayLiq = PRODUCTOS.some(function (p) { return (p.colores || []).some(function (c) { return c.liquidacion && !estaAgotado(p, c); }); });
+    lista.innerHTML =
+      '<a class="chip chip--talla" href="#mi-talla" data-ir-talla><svg class="icono" aria-hidden="true"><use href="#i-pie"/></svg><span id="chip-talla-texto">Mi talla</span></a>' +
+      '<span class="filtros__sep" aria-hidden="true"></span>' +
+      (hayLiq ? '<button type="button" class="chip chip--liquidacion" data-filtro="liquidacion" aria-pressed="false"><span class="chip__punto" aria-hidden="true"></span>Liquidación</button>' : '') +
+      '<button type="button" class="chip" data-filtro="conPrecio" aria-pressed="false">Con precio</button>' +
+      '<span class="filtros__sep" aria-hidden="true"></span>' +
+      secciones +
+      '<button type="button" class="chip chip--quitar" data-quitar-filtros hidden><svg class="icono" aria-hidden="true"><use href="#i-cerrar"/></svg>Quitar</button>';
+    var chips = $('#mi-talla-chips');
+    chips.innerHTML = '<button type="button" class="talla-chip talla-chip--todas" data-talla="" aria-pressed="true">Todas</button>' +
+      TALLAS_FILTRO.map(function (t) {
+        return '<button type="button" class="talla-chip" data-talla="' + t + '" aria-pressed="false"><span class="oculto">Talla </span>' + t + '</button>';
+      }).join('') +
+      '<a class="talla-chip talla-chip--guia" href="#tallas"><svg class="icono" aria-hidden="true"><use href="#i-regla"/></svg><span>Guía</span><span class="oculto"> de tallas</span></a>';
+    $('#mi-talla').hidden = false;
+  }
+
+  function aplicarFiltros() {
+    var total = 0;
+    $$('.seccion-catalogo').forEach(function (sec) {
+      var visibles = 0;
+      $$('.tarjeta', sec).forEach(function (li) {
+        var x = desdeClave(li.getAttribute('data-clave'));
+        if (!x) return;
+        var pasa = pasaFiltro(x.p, x.c);
+        li.hidden = !pasa;
+        if (pasa) visibles++;
+        var viejo = $('.tarjeta__tallas', li);
+        var nuevo = lineaTallasHtml(x.p, x.c, filtro.talla);
+        if (viejo && viejo.outerHTML === nuevo) return;
+        if (viejo) viejo.parentNode.removeChild(viejo);
+        if (nuevo) $('.tarjeta__precio', li).insertAdjacentHTML('afterend', nuevo);
+      });
+      sec.hidden = visibles === 0;
+      total += visibles;
+    });
+    // Estado de los botones
+    $$('#mi-talla-chips [data-talla]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.getAttribute('data-talla') || '') === String(filtro.talla || '') ? 'true' : 'false');
+    });
+    $$('#filtros-lista [data-filtro]').forEach(function (b) {
+      var tipo = b.getAttribute('data-filtro');
+      var activo = tipo === 'seccion' ? filtro.secciones.indexOf(b.getAttribute('data-valor')) !== -1 : !!filtro[tipo];
+      b.setAttribute('aria-pressed', activo ? 'true' : 'false');
+    });
+    var conFiltros = hayFiltros();
+    var textoTalla = filtro.talla ? 'Talla ' + filtro.talla : 'Mi talla';
+    var chipTalla = $('#chip-talla-texto');
+    if (chipTalla) {
+      chipTalla.textContent = textoTalla;
+      chipTalla.parentNode.classList.toggle('chip--activo', !!filtro.talla);
+    }
+    var appTalla = $('#app-talla-texto');
+    if (appTalla) appTalla.textContent = textoTalla;
+    $$('[data-quitar-filtros], #quitar-filtros').forEach(function (b) { b.hidden = !conFiltros; });
+    var cuenta = $('#resultado-cuenta');
+    if (cuenta) {
+      cuenta.innerHTML = '<strong>' + total + '</strong> ' + (total === 1 ? 'zapatilla' : 'zapatillas') +
+        (filtro.talla ? ' en talla ' + esc(filtro.talla) : '');
+    }
+    // Sin resultados
+    var vacio = $('#catalogo-vacio');
+    if (vacio) {
+      vacio.hidden = total > 0;
+      if (!total) {
+        var texto = filtro.talla
+          ? plantilla(M.tallaBuscada || 'Hola Thalia Import 💕 Busco zapatillas en talla *{talla}*. ¿Me avisas cuando lleguen, preciosa?', { talla: filtro.talla })
+          : (M.general || 'Hola Thalia Import 💕');
+        $('#catalogo-vacio-titulo').textContent = filtro.talla ? 'No hay en tu talla por ahora 💕' : 'No hay modelos con estos filtros 💕';
+        $('#catalogo-vacio-texto').textContent = filtro.talla ? 'Escríbenos y te avisamos cuando lleguen.' : 'Escríbenos y te ayudamos a encontrar tu par.';
+        $('#catalogo-vacio-wa').href = urlWhatsApp(texto);
+      }
+    }
+    document.documentElement.classList.toggle('con-filtros', conFiltros);
+  }
+
+  // Después de cambiar un filtro: si la clienta ya bajó, sube hasta el contador para que vea el resultado.
+  function mostrarResultado() {
+    var linea = $('.resultado');
+    var barraF = $('#filtros');
+    if (!linea || !barraF) return;
+    var tope = barraF.getBoundingClientRect().bottom;
+    var r = linea.getBoundingClientRect();
+    if (r.top >= tope - 1) return;   // ya está a la vista (o más abajo, justo antes de las tarjetas)
+    var destino = window.pageYOffset + r.top - barraF.offsetHeight - 12;
+    try { window.scrollTo({ top: destino, behavior: sinMovimiento() ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, destino); }
+  }
+
+  function elegirTalla(t) {
+    filtro.talla = t ? String(t) : null;
+    if (filtro.talla) guardar('miTalla', filtro.talla);
+    else { try { localStorage.removeItem('thalia.miTalla'); } catch (e) { /* nada */ } }
+    aplicarFiltros();
+  }
+  function quitarFiltros() {
+    filtro.liquidacion = false;
+    filtro.conPrecio = false;
+    filtro.secciones = [];
+    elegirTalla(null);
+  }
+  function irAMiTalla() {
+    var caja = $('#mi-talla');
+    if (!caja) return;
+    var barraF = $('#filtros');
+    var destino = window.pageYOffset + caja.getBoundingClientRect().top - (barraF ? barraF.offsetHeight : 0) - 10;
+    try { window.scrollTo({ top: destino, behavior: sinMovimiento() ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, destino); }
+    var b = $('#mi-talla-chips [aria-pressed="true"]');
+    if (b) { try { b.focus({ preventScroll: true }); } catch (e) { b.focus(); } }
+  }
+
+  function iniciarFiltros() {
+    var guardada = leer('miTalla');
+    if (guardada && TALLAS_FILTRO.indexOf(Number(guardada)) !== -1) filtro.talla = String(Number(guardada));
+    pintarFiltros();
+    aplicarFiltros();
+    $('#mi-talla-chips').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-talla]');
+      if (!b) return;
+      var t = b.getAttribute('data-talla');
+      elegirTalla(t && t !== filtro.talla ? t : null);
+      mostrarResultado();
+    });
+    $('#filtros-lista').addEventListener('click', function (e) {
+      if (e.target.closest('[data-ir-talla]')) { e.preventDefault(); irAMiTalla(); return; }
+      if (e.target.closest('[data-quitar-filtros]')) { quitarFiltros(); mostrarResultado(); return; }
+      var b = e.target.closest('button[data-filtro]');
+      if (!b) return;
+      var tipo = b.getAttribute('data-filtro');
+      if (tipo === 'seccion') {
+        var v = b.getAttribute('data-valor');
+        var i = filtro.secciones.indexOf(v);
+        if (i === -1) filtro.secciones.push(v); else filtro.secciones.splice(i, 1);
+      } else {
+        filtro[tipo] = !filtro[tipo];
+      }
+      aplicarFiltros();
+      mostrarResultado();
+    });
+    $('#quitar-filtros').addEventListener('click', quitarFiltros);
+  }
+
+  // ------------------------------------------------------------------ entrada escalonada de tarjetas
+  // Aparecen al bajar (opacidad + desplazamiento), una sola vez. Sin IntersectionObserver o con
+  // "reducir movimiento", aparecen directo.
+  function iniciarEntrada() {
+    if (sinMovimiento() || !('IntersectionObserver' in window)) return;
+    var tarjetas = $$('.tarjeta');
+    var obs = new IntersectionObserver(function (entradas) {
+      var n = 0;
+      entradas.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        var li = en.target;
+        obs.unobserve(li);
+        var retraso = Math.min(n++, 5) * 70;
+        li.style.setProperty('--retraso', retraso + 'ms');
+        li.classList.add('tarjeta--vista');
+        setTimeout(function () {
+          li.classList.remove('tarjeta--entra', 'tarjeta--vista');
+          li.style.removeProperty('--retraso');
+        }, 650 + retraso);
+      });
+    }, { rootMargin: '0px 0px -6% 0px' });
+    tarjetas.forEach(function (li) {
+      var r = li.getBoundingClientRect();
+      if (r.bottom < 0) return;   // ya pasó (por ejemplo al volver con el botón atrás)
+      li.classList.add('tarjeta--entra');
+      obs.observe(li);
+    });
+  }
+
+  // ------------------------------------------------------------------ carrusel de liquidación
+  function pintarLiquidacion() {
+    var caja = $('#liquidacion');
+    if (!caja) return;
+    var items = [];
+    PRODUCTOS.forEach(function (p) {
+      (p.colores || []).forEach(function (c) {
+        if (c.liquidacion && !estaAgotado(p, c) && c.fotos && c.fotos.length) items.push({ p: p, c: c });
+      });
+    });
+    if (!items.length) { caja.hidden = true; return; }
+    var pista = $('#liquidacion-pista');
+    pista.innerHTML = items.map(function (it) {
+      var p = it.p, c = it.c;
+      var precio = precioDe(p, c);
+      var u = tallaUnica(p, c);
+      var tallas = tallasDe(p, c);
+      var talla = u ? 'Solo talla ' + u : (tallas ? 'Tallas ' + listaTexto(tallas) : 'Consulta tallas');
+      return '<li class="liquidacion__item">' +
+        '<button type="button" class="liq-tarjeta" data-producto="' + esc(p.id) + '" data-color="' + esc(c.id) + '" data-clave="' + esc(claveDe(p, c)) + '">' +
+          '<span class="liq-tarjeta__foto"><img src="' + foto('tarjeta', c.fotos[0]) + '" alt="" width="600" height="600" loading="lazy" decoding="async">' +
+            '<span class="etiqueta etiqueta--liquidacion">Liquidación</span></span>' +
+          '<span class="liq-tarjeta__cuerpo">' +
+            '<span class="liq-tarjeta__nombre">' + esc(p.nombre) + '</span>' +
+            '<span class="liq-tarjeta__color">' + esc(c.nombre) + (codigoTexto(c) ? ' <span class="tarjeta__codigo">' + codigoTexto(c) + '</span>' : '') + '</span>' +
+            '<span class="liq-tarjeta__precio">' + (precio ? esc(formatoPrecio(precio)) : 'Consultar precio') + '</span>' +
+            '<span class="liq-tarjeta__talla">' + esc(talla) + '</span>' +
+          '</span>' +
+          '<span class="oculto">. Ver fotos y detalles</span>' +
+        '</button></li>';
+    }).join('');
+    caja.hidden = false;
+    var flechas = $$('[data-liq]', caja);
+    function marcarFlechas() {
+      var max = pista.scrollWidth - pista.clientWidth;
+      caja.classList.toggle('liquidacion--desliza', max > 4);
+      flechas.forEach(function (b) {
+        var dir = Number(b.getAttribute('data-liq'));
+        b.disabled = dir < 0 ? pista.scrollLeft <= 4 : pista.scrollLeft >= max - 4;
+      });
+    }
+    flechas.forEach(function (b) {
+      b.addEventListener('click', function () {
+        var paso = Math.max(pista.clientWidth * 0.8, 200) * Number(b.getAttribute('data-liq'));
+        try { pista.scrollBy({ left: paso, behavior: sinMovimiento() ? 'auto' : 'smooth' }); } catch (e) { pista.scrollLeft += paso; }
+      });
+    });
+    var pendiente = false;
+    pista.addEventListener('scroll', function () {
+      if (pendiente) return;
+      pendiente = true;
+      window.requestAnimationFrame(function () { pendiente = false; marcarFlechas(); });
+    }, { passive: true });
+    window.addEventListener('resize', marcarFlechas);
+    marcarFlechas();
+  }
+
   function tarjetaHtml(p, c) {
     var agotada = estaAgotado(p, c);
     var k = claveDe(p, c);
     var principal = (c.fotos && c.fotos[0]) || '';
     var etiqueta = etiquetaDe(p, c);
     var precio = precioDe(p, c);
-    var tallas = tallasDe(p, c);
     var unica = tallaUnica(p, c);
-    var lineaTallas = '';
-    if (!agotada) {
-      if (!tallas) lineaTallas = '<p class="tarjeta__tallas">Consulta tallas</p>';
-      else if (!unica) lineaTallas = '<p class="tarjeta__tallas">Tallas ' + esc(listaTexto(tallas)) + '</p>';
-    }
+    var lineaTallas = lineaTallasHtml(p, c, filtro.talla);
     var nombreCompleto = p.nombre + ', ' + c.nombre;
     var pedir;
     if (agotada) {
@@ -546,8 +811,8 @@
     return '<li class="tarjeta' + (agotada ? ' tarjeta--agotada' : '') + '" data-clave="' + esc(k) + '">' +
       '<div class="tarjeta__foto">' +
         '<img src="' + foto('tarjeta', principal) + '" alt="' + esc(p.nombre + ', color ' + c.nombre) + '" width="600" height="600" loading="lazy" decoding="async">' +
-        (etiqueta ? '<span class="etiqueta ' + etiqueta.clase + '">' + esc(etiqueta.texto) + '</span>' : '') +
         (c.liquidacion && !agotada ? '<span class="etiqueta etiqueta--liquidacion">Liquidación</span>' : '') +
+        (etiqueta ? '<span class="etiqueta ' + etiqueta.clase + '">' + esc(etiqueta.texto) + '</span>' : '') +
         (agotada ? '' : '<button type="button" class="tarjeta__duo" data-duo="' + esc(k) + '" data-nombre="' + esc(nombreCompleto) + '" aria-pressed="false">' +
           '<svg class="icono icono--mas" aria-hidden="true"><use href="#i-mas"/></svg><svg class="icono icono--check" aria-hidden="true"><use href="#i-check"/></svg>' +
           '<span aria-hidden="true">Dúo</span><span class="oculto">Agregar ' + esc(nombreCompleto) + ' a mi dúo</span></button>') +
@@ -590,41 +855,20 @@
         '</div>' +
       '</section>';
     });
+    html += '<div class="contenedor catalogo__vacio" id="catalogo-vacio" hidden>' +
+      '<div class="vacio">' +
+        '<span class="vacio__icono" aria-hidden="true"><svg class="icono"><use href="#i-pie"/></svg></span>' +
+        '<p class="vacio__titulo" id="catalogo-vacio-titulo">No hay en tu talla por ahora 💕</p>' +
+        '<p class="vacio__texto" id="catalogo-vacio-texto">Escríbenos y te avisamos cuando lleguen.</p>' +
+        '<div class="vacio__botones">' +
+          '<a class="boton boton--primario" id="catalogo-vacio-wa" href="#" target="_blank" rel="noopener"><svg class="icono" aria-hidden="true"><use href="#i-wa"/></svg>Escríbenos por WhatsApp</a>' +
+          '<button type="button" class="boton boton--borde" data-quitar-filtros>Ver todas</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
     cont.insertAdjacentHTML('beforeend', html);
-  }
-
-  function pintarMenu() {
-    var lista = $('#menu-secciones');
-    if (!lista) return;
-    var items = seccionesConProductos().map(function (s) {
-      return '<li><a href="#seccion-' + esc(s.id) + '" data-espia="seccion-' + esc(s.id) + '">' + esc(s.titulo) + '</a></li>';
-    });
-    items.push('<li><a href="#tallas" data-espia="tallas">Guía de tallas</a></li>');
-    items.push('<li><a href="#como-comprar" data-espia="como-comprar">Cómo comprar</a></li>');
-    items.push('<li><a href="#preguntas" data-espia="preguntas">Preguntas</a></li>');
-    lista.innerHTML = items.join('');
-  }
-
-  function iniciarEspia() {
-    if (!('IntersectionObserver' in window)) return;
-    var lista = $('#menu-secciones');
-    var enlaces = $$('a[data-espia]', lista);
-    var porId = {};
-    enlaces.forEach(function (a) { porId[a.getAttribute('data-espia')] = a; });
-    var activo = null;
-    var obs = new IntersectionObserver(function (entradas) {
-      entradas.forEach(function (en) {
-        if (!en.isIntersecting) return;
-        var a = porId[en.target.id];
-        if (!a || a === activo) return;
-        if (activo) activo.removeAttribute('aria-current');
-        a.setAttribute('aria-current', 'true');
-        activo = a;
-        var destino = a.parentNode.offsetLeft - (lista.clientWidth - a.parentNode.offsetWidth) / 2;
-        try { lista.scrollTo({ left: destino, behavior: 'smooth' }); } catch (e) { lista.scrollLeft = destino; }
-      });
-    }, { rootMargin: '-40% 0px -55% 0px' });
-    Object.keys(porId).forEach(function (id) { var s = document.getElementById(id); if (s) obs.observe(s); });
+    var vacio = $('#catalogo-vacio [data-quitar-filtros]');
+    if (vacio) vacio.addEventListener('click', function () { quitarFiltros(); mostrarResultado(); });
   }
 
   // ------------------------------------------------------------------ hojas (diálogos) + botón atrás
@@ -633,9 +877,11 @@
   var abridor = null;
 
   function estaAbierto(d) { return !!(d && (d.open || d.hasAttribute('open'))); }
-  function abrirModal(d) {
+  function abrirModal(d, sinAnimacionCss) {
     abridor = document.activeElement;
     if (!estaAbierto(d)) {
+      // Si la ficha "crece" desde la tarjeta, la animación de la hoja (CSS) se apaga para no chocar.
+      d.classList.toggle('hoja--crece', !!sinAnimacionCss);
       if (soportaDialogo) d.showModal();
       else { d.setAttribute('open', ''); d.classList.add('hoja--falsa'); }
     }
@@ -646,6 +892,11 @@
     if (cerrar) { try { cerrar.focus({ preventScroll: true }); } catch (e) { cerrar.focus(); } }
   }
   function cerrarModal(d) {
+    if (!estaAbierto(d) || cerrando) return;
+    if (d === dlgFicha && encogerFicha(function () { cerrarModalYa(d); })) return;
+    cerrarModalYa(d);
+  }
+  function cerrarModalYa(d) {
     if (!estaAbierto(d)) return;
     if (soportaDialogo && d.open) d.close();
     else { d.removeAttribute('open'); d.classList.remove('hoja--falsa'); }
@@ -654,8 +905,91 @@
       try { abridor.focus({ preventScroll: true }); } catch (e) { abridor.focus(); }
     }
   }
-  function mostrarHoja(d, hash) {
-    abrirModal(d);
+  // ---- La ficha "crece" desde la foto de la tarjeta (View Transitions o, si no hay, escala/opacidad)
+  var fichaOrigen = null;   // foto de la tarjeta que abrió la ficha
+  var cerrando = false;
+  function esperarImagen(im, ms) {
+    return new Promise(function (ok) {
+      var listo = false;
+      var fin = function () { if (!listo) { listo = true; ok(); } };
+      setTimeout(fin, ms);
+      if (!im) fin();
+      else if (im.decode) im.decode().then(fin, fin);
+      else if (im.complete) fin();
+      else im.addEventListener('load', fin);
+    });
+  }
+  function nombrarFoto(el, si) { if (el) el.style.viewTransitionName = si ? 'foto-ficha' : ''; }
+  function primerItemGaleria() { return $('#ficha-galeria .galeria__item'); }
+  function abrirFichaDesde(img, pid, cid) {
+    fichaOrigen = img || null;
+    if (!img || sinMovimiento() || estaAbierto(dlgFicha)) { abrirFicha(pid, cid); return; }
+    if (typeof document.startViewTransition === 'function') {
+      var vt;
+      nombrarFoto(img, true);
+      try {
+        vt = document.startViewTransition(function () {
+          nombrarFoto(img, false);
+          abrirFicha(pid, cid, true, true);
+          nombrarFoto(primerItemGaleria(), true);
+          return esperarImagen($('#ficha-galeria .galeria__previa') || $('#ficha-galeria .galeria__foto'), 160);
+        });
+      } catch (e) {
+        nombrarFoto(img, false);
+        if (!estaAbierto(dlgFicha)) abrirFicha(pid, cid);
+        return;
+      }
+      var limpiar = function () { nombrarFoto(img, false); nombrarFoto(primerItemGaleria(), false); };
+      vt.finished.then(limpiar, limpiar);
+      return;
+    }
+    var desde = img.getBoundingClientRect();
+    abrirFicha(pid, cid, true, true);
+    crecerDesde(dlgFicha, desde);
+  }
+  // Respaldo sin View Transitions: la hoja sale escalada desde donde estaba la foto.
+  function crecerDesde(d, r0) {
+    if (typeof d.animate !== 'function') return;
+    var r = d.getBoundingClientRect();
+    if (!r.width || !r.height || !r0.width) return;
+    var s = Math.max(0.2, Math.min(1, r0.width / r.width));
+    var dx = (r0.left + r0.width / 2) - (r.left + r.width / 2);
+    var dy = (r0.top + r0.height / 2) - (r.top + r.height / 2);
+    d.animate([
+      { transform: 'translate(' + dx + 'px, ' + dy + 'px) scale(' + s + ')', opacity: 0 },
+      { transform: 'none', opacity: 1 }
+    ], { duration: 340, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+  }
+  // Al cerrar, si la tarjeta sigue a la vista, la foto vuelve a su lugar.
+  function encogerFicha(cerrar) {
+    var img = fichaOrigen;
+    if (!img || sinMovimiento() || typeof document.startViewTransition !== 'function') return false;
+    if (!document.contains(img) || img.closest('[hidden]')) return false;
+    var r = img.getBoundingClientRect();
+    var item = primerItemGaleria();
+    if (!item || !r.width || r.bottom < 0 || r.top > window.innerHeight || indiceGaleria() !== 0) return false;
+    nombrarFoto(item, true);
+    var vt;
+    cerrando = true;
+    try {
+      vt = document.startViewTransition(function () {
+        cerrando = false;
+        nombrarFoto(item, false);
+        cerrar();
+        nombrarFoto(img, true);
+      });
+    } catch (e) {
+      cerrando = false;
+      nombrarFoto(item, false);
+      return false;
+    }
+    var limpiar = function () { cerrando = false; nombrarFoto(img, false); nombrarFoto(item, false); };
+    vt.finished.then(limpiar, limpiar);
+    return true;
+  }
+
+  function mostrarHoja(d, hash, crece) {
+    abrirModal(d, crece);
     try { history.pushState({ hoja: d.id }, '', hash); } catch (e) { /* sin historial */ }
   }
   function pedirCierre(d) {
@@ -688,15 +1022,19 @@
   // ------------------------------------------------------------------ ficha de producto
   var ficha = { p: null, c: null, talla: null };
 
+  // Talla que la ficha deja marcada: la única que hay, si no "Mi talla" (filtro), si no la última elegida.
   function tallaInicial(p, c) {
     var u = tallaUnica(p, c);
     if (u && !tallaAgotada(c, u)) return String(u);
-    var pref = leer('talla');
-    if (pref && opcionesTalla(p, c).indexOf(Number(pref)) !== -1 && !tallaAgotada(c, pref)) return String(pref);
+    var prefs = [leer('miTalla'), leer('talla')];
+    for (var i = 0; i < prefs.length; i++) {
+      var pref = prefs[i];
+      if (pref && opcionesTalla(p, c).indexOf(Number(pref)) !== -1 && !tallaAgotada(c, pref)) return String(pref);
+    }
     return null;
   }
 
-  function abrirFicha(pid, cid, conHistoria) {
+  function abrirFicha(pid, cid, conHistoria, crece) {
     var p = productoPorId(pid);
     if (!p || !p.colores || !p.colores.length) return;
     var c = colorPorId(p, cid) || p.colores[0];
@@ -706,7 +1044,7 @@
     pintarFicha();
     var hash = '#producto=' + encodeURIComponent(p.id) + '&color=' + encodeURIComponent(c.id);
     if (conHistoria === false) abrirModal(dlgFicha);
-    else mostrarHoja(dlgFicha, hash);
+    else mostrarHoja(dlgFicha, hash, crece);
   }
 
   function pintarFicha() {
@@ -786,8 +1124,16 @@
     var g = $('#ficha-galeria');
     g.innerHTML = fotos.map(function (id, i) {
       var alt = p.nombre + ', color ' + c.nombre + (fotos.length > 1 ? ' (foto ' + (i + 1) + ' de ' + fotos.length + ')' : '');
-      return '<div class="galeria__item"><img src="' + foto('grande', id) + '" alt="' + esc(alt) + '" decoding="async"' + (i ? ' loading="lazy"' : '') + '></div>';
+      // La primera foto lleva debajo la de la tarjeta (ya está en caché): se ve al instante con datos lentos.
+      var previa = i ? '' : '<img class="galeria__previa" src="' + foto('tarjeta', id) + '" alt="" aria-hidden="true">';
+      return '<div class="galeria__item">' + previa + '<img class="galeria__foto" src="' + foto('grande', id) + '" alt="' + esc(alt) + '" decoding="async"' + (i ? ' loading="lazy"' : '') + '></div>';
     }).join('');
+    var primera = $('.galeria__foto', g);
+    var quitarPrevia = function () { var pv = $('.galeria__previa', g); if (pv) pv.parentNode.removeChild(pv); };
+    if (primera) {
+      if (primera.complete && primera.naturalWidth) quitarPrevia();
+      else { primera.addEventListener('load', quitarPrevia); }
+    }
     g.scrollLeft = 0;
     var puntos = $('#ficha-puntos');
     puntos.innerHTML = fotos.length > 1 ? fotos.map(function (f, i) { return '<span' + (i ? '' : ' class="activo"') + '></span>'; }).join('') : '';
@@ -941,6 +1287,7 @@
     if (!x || estaAgotado(x.p, x.c)) return false;
     duo.push({ k: k, talla: talla || tallaInicial(x.p, x.c) });
     guardarDuo();
+    minimizarDuo(false);
     pintarDuo();
     avisoDuo(duo.length === 1 ? 'Listo 💕 Ahora elige otro par.' : '¡Tu dúo está listo! Revisa las tallas y pídelo.');
     return true;
@@ -988,6 +1335,7 @@
     var lista = $('#barra-duo-pares');
     if (!duo.length) {
       barra.hidden = true;
+      minimizarDuo(false);
       document.documentElement.classList.remove('con-duo');
     } else {
       barra.hidden = false;
@@ -998,7 +1346,143 @@
     actualizarCtaDuo();
     marcarTarjetas();
     actualizarBotonDuoFicha();
+    actualizarAppDuo();
     medirBarra();
+  }
+
+  // ---- Barra del dúo minimizada (solo celular: se vuelve a abrir con "Mi dúo" de la barra de abajo)
+  function esCelular() { return !!(window.matchMedia && window.matchMedia('(max-width: 719px)').matches); }
+  function minimizarDuo(si) {
+    if (!barra) return;
+    var antes = barra.classList.contains('barra-duo--minimizada');
+    if (antes === !!si) return;
+    barra.classList.toggle('barra-duo--minimizada', !!si);
+    document.documentElement.classList.toggle('duo-minimizado', !!si);
+    actualizarAppDuo();
+    medirBarra();
+  }
+  function actualizarAppDuo() {
+    var n = duo.length;
+    var insignia = $('#app-duo-cuenta');
+    if (insignia) { insignia.textContent = String(n); insignia.hidden = !n; }
+    var oculto = $('#app-duo-oculto');
+    if (oculto) oculto.textContent = n ? ': ' + n + (n === 1 ? ' par' : ' pares') + ' de 2' : ': sin pares todavía';
+    var b = $('[data-app="duo"]');
+    if (b) b.setAttribute('aria-expanded', n && !barra.classList.contains('barra-duo--minimizada') ? 'true' : 'false');
+  }
+  function avisoApp(texto) {
+    var el = $('#aviso-app');
+    if (!el) return;
+    el.textContent = texto;
+    el.classList.add('visible');
+    clearTimeout(avisoApp.t);
+    avisoApp.t = setTimeout(function () { el.classList.remove('visible'); }, 3600);
+  }
+  // "Mi dúo": abre la barra (si estaba minimizada) o la enfoca con un pequeño salto.
+  function abrirMiDuo() {
+    if (!duo.length) {
+      avisoApp('Toca «+ Dúo» en 2 modelos que te gusten 💕');
+      var cat = $('.seccion-catalogo:not([hidden])');
+      if (cat) {
+        var destino = window.pageYOffset + cat.getBoundingClientRect().top - ($('#filtros') ? $('#filtros').offsetHeight : 0) - 8;
+        try { window.scrollTo({ top: destino, behavior: sinMovimiento() ? 'auto' : 'smooth' }); } catch (e) { window.scrollTo(0, destino); }
+      }
+      return;
+    }
+    var estaba = barra.classList.contains('barra-duo--minimizada');
+    minimizarDuo(false);
+    var titulo = $('#barra-duo-titulo');
+    var enfocar = function () { if (titulo) { try { titulo.focus({ preventScroll: true }); } catch (e) { titulo.focus(); } } };
+    enfocar();
+    // Si estaba escondida, su "visibility" puede tardar un cuadro en volver: se reintenta.
+    if (estaba) window.requestAnimationFrame(function () { setTimeout(enfocar, 0); });
+    if (!estaba && !sinMovimiento() && typeof barra.animate === 'function') {
+      barra.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-8px)' }, { transform: 'translateY(0)' }], { duration: 360, easing: 'ease-out' });
+    }
+  }
+
+  // ---- Vuelo de la foto hasta el dúo y corazoncitos al completar los 2 pares
+  function desplazamientoY(el) {
+    var t = getComputedStyle(el).transform;
+    if (!t || t === 'none') return 0;
+    var n = t.slice(t.indexOf('(') + 1, -1).split(',').map(Number);
+    if (/^matrix3d/.test(t)) return n[13] || 0;   // matrix3d(…): el valor 14 es Y
+    return n[5] || 0;                             // matrix(a, b, c, d, x, y)
+  }
+  function volarAlDuo(img, desde, indice, alLlegar) {
+    if (sinMovimiento() || !img || !desde || typeof img.animate !== 'function') return false;
+    var par = $$('#barra-duo-pares .par-duo')[indice];
+    var meta = par && $('.par-duo__foto', par);
+    if (!meta) return false;
+    var r = meta.getBoundingClientRect();
+    var top = r.top - desplazamientoY(barra);   // la barra puede estar entrando (subiendo)
+    if (!r.width || !desde.width) return false;
+    var dx = r.left - desde.left, dy = top - desde.top, s = r.width / desde.width;
+    var fotoMeta = $('img', meta);
+    if (fotoMeta) fotoMeta.style.opacity = '0';
+    // Tres capas: X lineal, Y con curva (hace el arco) y la foto (escala y opacidad).
+    var x = document.createElement('div');
+    x.className = 'vuelo';
+    x.setAttribute('aria-hidden', 'true');
+    x.style.left = desde.left + 'px';
+    x.style.top = desde.top + 'px';
+    x.style.width = desde.width + 'px';
+    x.style.height = desde.height + 'px';
+    x.setAttribute('data-destino', Math.round(r.left) + ',' + Math.round(top) + ',' + Math.round(r.width));
+    x.innerHTML = '<div class="vuelo__y"><img class="vuelo__foto" src="' + img.currentSrc.replace(/"/g, '&quot;') + '" alt=""></div>';
+    document.body.appendChild(x);
+    var y = x.firstChild, f = y.firstChild;
+    var dur = 620;
+    x.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(' + dx + 'px)' }], { duration: dur, easing: 'cubic-bezier(.4, 0, .2, 1)', fill: 'forwards' });
+    y.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(' + dy + 'px)' }], { duration: dur, easing: 'cubic-bezier(.5, -0.45, .75, .9)', fill: 'forwards' });
+    var anim = f.animate([
+      { transform: 'scale(1)', opacity: 1 },
+      { transform: 'scale(' + (1 + (s - 1) * 0.35) + ')', opacity: 1, offset: 0.55 },
+      { transform: 'scale(' + s + ')', opacity: 0.85 }
+    ], { duration: dur, easing: 'ease-in-out', fill: 'forwards' });
+    var terminado = false;
+    var fin = function () {
+      if (terminado) return;
+      terminado = true;
+      if (x.parentNode) x.parentNode.removeChild(x);
+      if (fotoMeta && document.contains(fotoMeta)) {
+        fotoMeta.style.opacity = '';
+        if (typeof meta.animate === 'function') meta.animate([{ transform: 'scale(.86)' }, { transform: 'scale(1.06)', offset: 0.6 }, { transform: 'scale(1)' }], { duration: 300, easing: 'ease-out' });
+      }
+      if (alLlegar) alLlegar(r.left + r.width / 2, top + r.height / 2);
+    };
+    anim.onfinish = fin;
+    setTimeout(fin, dur + 400);   // por si la pestaña estaba en segundo plano
+    return true;
+  }
+  function corazones(cx, cy) {
+    if (sinMovimiento()) return;
+    var caja = document.createElement('div');
+    caja.className = 'corazones';
+    caja.setAttribute('aria-hidden', 'true');
+    caja.style.left = cx + 'px';
+    caja.style.top = cy + 'px';
+    var colores = ['var(--acento)', 'var(--enfasis)', '#E2306C', 'var(--acento-2)'];
+    var total = 14;
+    var html = '';
+    for (var i = 0; i < total; i++) {
+      html += '<svg class="corazon" style="color:' + colores[i % colores.length] + '"><use href="#i-corazon"/></svg>';
+    }
+    caja.innerHTML = html;
+    document.body.appendChild(caja);
+    $$('.corazon', caja).forEach(function (h, i) {
+      if (typeof h.animate !== 'function') return;
+      var ang = (i / total) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
+      var dist = 52 + Math.random() * 58;
+      var hx = Math.cos(ang) * dist, hy = Math.sin(ang) * dist - 26;
+      var giro = Math.round((Math.random() - 0.5) * 50);
+      h.animate([
+        { transform: 'translate(0, 0) scale(.3)', opacity: 0 },
+        { transform: 'translate(' + (hx * 0.6) + 'px, ' + (hy * 0.6) + 'px) scale(1.1) rotate(' + giro + 'deg)', opacity: 1, offset: 0.35 },
+        { transform: 'translate(' + hx + 'px, ' + (hy - 18) + 'px) scale(.7) rotate(' + giro + 'deg)', opacity: 0 }
+      ], { duration: 820 + Math.random() * 260, easing: 'cubic-bezier(.2, .7, .3, 1)', fill: 'forwards' });
+    });
+    setTimeout(function () { if (caja.parentNode) caja.parentNode.removeChild(caja); }, 1300);
   }
 
   function actualizarCtaDuo() {
@@ -1038,7 +1522,7 @@
 
   function medirBarra() {
     if (!barra) return;
-    var alto = barra.hidden ? 0 : barra.offsetHeight;
+    var alto = barra.hidden || barra.classList.contains('barra-duo--minimizada') ? 0 : barra.offsetHeight;
     document.documentElement.style.setProperty('--alto-barra', alto + 'px');
   }
 
@@ -1076,8 +1560,35 @@
       if (falta) { avisoDuo(falta.texto); return; }
       compartirConFotos($('#duo-fotos'), mensajeDuo(itemsDuo()), avisoDuo);
     });
+    $('#duo-ocultar').addEventListener('click', function () {
+      minimizarDuo(true);
+      avisoApp('Tu dúo sigue guardado: tócalo abajo, en «Mi dúo» 💕');
+    });
     if ('ResizeObserver' in window) new ResizeObserver(medirBarra).observe(barra);
-    window.addEventListener('resize', medirBarra);
+    window.addEventListener('resize', function () {
+      if (!esCelular()) minimizarDuo(false);
+      medirBarra();
+    });
+  }
+
+  // ------------------------------------------------------------------ barra de abajo (celular)
+  function iniciarBarraApp() {
+    var nav = $('#barra-app');
+    if (!nav) return;
+    nav.addEventListener('click', function (e) {
+      var item = e.target.closest('[data-app]');
+      if (!item) return;
+      var que = item.getAttribute('data-app');
+      if (que === 'inicio') {
+        e.preventDefault();
+        try { window.scrollTo({ top: 0, behavior: sinMovimiento() ? 'auto' : 'smooth' }); } catch (err) { window.scrollTo(0, 0); }
+      } else if (que === 'talla') {
+        e.preventDefault();
+        irAMiTalla();
+      } else if (que === 'duo') {
+        abrirMiDuo();
+      }
+    });
   }
 
   // ------------------------------------------------------------------ enlaces directos (#producto=…)
@@ -1094,6 +1605,7 @@
   function abrirDesdeHash(alCargar) {
     var h = leerHash();
     if (!h || !PRODUCTOS || !productoPorId(h.producto)) return;
+    fichaOrigen = null;
     if (alCargar) {
       // Deja la página "debajo" en el historial: el botón atrás cierra la ficha y no saca de la web.
       try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* nada */ }
@@ -1129,10 +1641,12 @@
   }
 
   function iniciarCatalogo() {
+    iniciarBarraApp();
     pintarCatalogo();
     if (!PRODUCTOS) return;
-    pintarMenu();
-    iniciarEspia();
+    pintarLiquidacion();
+    iniciarFiltros();
+    iniciarEntrada();
     iniciarFicha();
     iniciarDuo();
 
@@ -1141,12 +1655,20 @@
       if (duoBtn) {
         var k = duoBtn.getAttribute('data-duo');
         var i = indiceEnDuo(k);
-        if (i !== -1) quitarDelDuo(i);
-        else agregarAlDuo(k);
+        if (i !== -1) { quitarDelDuo(i); return; }
+        var img = $('.tarjeta__foto img', duoBtn.closest('.tarjeta'));
+        var desde = img ? img.getBoundingClientRect() : null;
+        if (agregarAlDuo(k)) {
+          var completo = duo.length === 2;
+          volarAlDuo(img, desde, duo.length - 1, completo ? corazones : null);
+        }
         return;
       }
-      var abrir = e.target.closest('.tarjeta__ver, button.tarjeta__pedir');
-      if (abrir) abrirFicha(abrir.getAttribute('data-producto'), abrir.getAttribute('data-color'));
+      var abrir = e.target.closest('.tarjeta__ver, button.tarjeta__pedir, .liq-tarjeta');
+      if (abrir) {
+        var caja = abrir.closest('.tarjeta, .liq-tarjeta');
+        abrirFichaDesde(caja ? $('img', caja) : null, abrir.getAttribute('data-producto'), abrir.getAttribute('data-color'));
+      }
     });
 
     abrirDesdeHash(true);
