@@ -65,7 +65,8 @@ window.PRODUCTOS = [
     descripcion: "Suela gruesa ondulada con dos franjas al costado.",
     colores: [
       // h22 trae precio y talla en el chat. h04 parece el mismo color y va como segunda foto (confirmar con Thalia).
-      { id: "crema-gris", nombre: "Crema con gris", fotos: ["h22", "h04"], precio: 30, tallas: [39] }
+      { id: "crema-gris", nombre: "Crema con gris", fotos: ["h22", "h04"], precio: 30, tallas: [39] },
+      { id: "blanco-beige", nombre: "Blanco con beige", fotos: ["h03"] }
     ]
   },
   {
@@ -78,9 +79,44 @@ window.PRODUCTOS = [
       { id: "negro", nombre: "Negro", fotos: ["h31"], precio: 49.90, tallas: [35, 37, 38, 39] }
     ]
   },
-  /* Sin precio (no van hasta que Thalia los pase): Plataforma Sport h23/h24/h25,
-     Plataforma con franjas h05, Plataforma con perrito h06, Plataforma gatita h07,
-     Plataforma ola blanco con beige h03, Malla tornasol h01/h02. Ver _trabajo\productos_viejo.js */
+  {
+    id: "plataforma-sport",
+    nombre: "Plataforma Sport",
+    seccion: "plataformas",
+    descripcion: "Plataforma con franjas brillantes y la palabra SPORT al costado.",
+    colores: [
+      { id: "blanco-rosa", nombre: "Blanco con rosa", fotos: ["h23"] },
+      { id: "blanco-negro", nombre: "Blanco con negro", fotos: ["h24"] },
+      { id: "negro", nombre: "Negro", fotos: ["h25"] }
+    ]
+  },
+  {
+    id: "plataforma-franjas",
+    nombre: "Plataforma con franjas",
+    seccion: "plataformas",
+    descripcion: "Blanca con dos franjas y talón negro. Un básico que va con todo.",
+    colores: [
+      { id: "blanco-negro", nombre: "Blanco con negro", fotos: ["h05"] }
+    ]
+  },
+  {
+    id: "plataforma-perrito",
+    nombre: "Plataforma con perrito",
+    seccion: "plataformas",
+    descripcion: "Blanca con detalles en relieve y un perrito en la lengüeta.",
+    colores: [
+      { id: "blanco", nombre: "Blanco", fotos: ["h06"] }
+    ]
+  },
+  {
+    id: "plataforma-gatita",
+    nombre: "Plataforma gatita",
+    seccion: "plataformas",
+    descripcion: "Plataforma alta con estampado de gatitas.",
+    colores: [
+      { id: "negro", nombre: "Negro", fotos: ["h07"] }
+    ]
+  },
 
   /* ------------------------------ DEPORTIVAS ------------------------------ */
   {
@@ -184,6 +220,16 @@ window.PRODUCTOS = [
     descripcion: "Crema con detalles verde menta y naranja, sobre suela ondulada.",
     colores: [
       { id: "crema-menta", nombre: "Crema con menta", fotos: ["48", "h20"], precio: 65, tallas: [37] }
+    ]
+  },
+  {
+    id: "malla-tornasol",
+    nombre: "Malla tornasol",
+    seccion: "deportivas",
+    descripcion: "Malla tejida con una franja de colores tornasol.",
+    colores: [
+      { id: "negro", nombre: "Negro", fotos: ["h01"] },
+      { id: "celeste", nombre: "Celeste", fotos: ["h02"] }
     ]
   },
 
