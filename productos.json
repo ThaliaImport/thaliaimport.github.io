@@ -37,7 +37,8 @@
           "precio": 35,
           "tallas": [
             39
-          ]
+          ],
+          "agotado": true
         }
       ]
     },
