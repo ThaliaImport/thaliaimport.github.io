@@ -12,15 +12,15 @@ window.AJUSTES = {
   // Dirección definitiva de la web, terminada en "/". Por ejemplo: "https://thaliaimport.com/"
   // Mientras esté vacía, los enlaces se arman con la dirección desde donde se abre la página.
   // Cuando la cambies, corre en tienda\_trabajo:  node paginas.js   (para que WhatsApp muestre la foto).
-  urlBase: "https://fisicapreuapp-arch.github.io/thalia-import/",
+  urlBase: "https://thaliaimport.github.io/",
 
   // Dónde guarda el panel de Thalia (admin/): la cuenta de GitHub, el repositorio y la rama de la web.
   // Si la tienda se muda a otra cuenta o repositorio, cambia SOLO estas tres líneas (y urlBase arriba).
   //   Repo "usuario.github.io"  -> la web queda en https://usuario.github.io/
   //   Repo "thalia-import"      -> la web queda en https://usuario.github.io/thalia-import/
   github: {
-    usuario: "fisicapreuapp-arch",
-    repo: "thalia-import",
+    usuario: "thaliaimport",
+    repo: "thaliaimport.github.io",
     rama: "main"
   },
 
